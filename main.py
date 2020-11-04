@@ -84,7 +84,8 @@ def forgot_password():
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')
+
     if cert == '' or key == '':
         app.run(debug=True, host='0.0.0.0')
-    else:]
+    else:
         app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
