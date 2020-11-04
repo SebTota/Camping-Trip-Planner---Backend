@@ -1,7 +1,10 @@
 from flask import Flask, jsonify, request, redirect
 from functools import wraps
 from flask_cors import CORS
+import os
+
 from src import auth
+
 
 # name = request.headers["name"]  # localhost:5000/login headers= {'name': 'someones name}
 # name = request.args["name"]  # localhost:5000/login?name=sebastian
@@ -70,8 +73,6 @@ def signup():
     if 1 == 0:
         return jsonify({'status': 400, 'error': 'user-already-exists'})
 
-
-
     return ""
 
 
@@ -81,4 +82,10 @@ def forgot_password():
 
 
 if __name__ == '__main__':
-    app.run()
+    cert = os.getenv('DOMAIN_CERT')
+    key = os.getenv('PRIVATE_KEY')
+
+    if cert == '' or key == '':
+        app.run(debug=True, host='0.0.0.0')
+    else:
+        app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
