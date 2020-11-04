@@ -5,7 +5,7 @@ import hashlib
 import base64
 
 # Global variables
-g_recaptcha_secret = os.getenv('recaptcha-secret')
+g_recaptcha_secret = os.getenv('RECAPTCHA_SECRET')
 
 
 def verify_recaptcha(g_recaptcha_response) -> bool:
