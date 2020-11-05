@@ -15,8 +15,7 @@ if g_recaptcha_secret == '':
 def verify_recaptcha(g_recaptcha_response) -> bool:
     recap_status = requests.post('https://www.google.com/recaptcha/api/siteverify', data={
         'secret': g_recaptcha_secret,
-        'response': g_recaptcha_response,
-        'remoteip': request.remote_addr
+        'response': g_recaptcha_response
     })
     return recap_status.json()['success']
 
