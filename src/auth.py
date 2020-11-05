@@ -1,11 +1,15 @@
 import requests
+from flask import request
 import os
 import bcrypt
 import hashlib
 import base64
 
 # Global variables
-g_recaptcha_secret = os.getenv('recaptcha-secret')
+g_recaptcha_secret = os.getenv('RECAPTCHA_SECRET')
+if g_recaptcha_secret == '':
+    print("ERROR: missing recaptcha secret")
+    exit(-1)
 
 
 def verify_recaptcha(g_recaptcha_response) -> bool:
