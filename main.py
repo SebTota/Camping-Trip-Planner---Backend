@@ -4,6 +4,7 @@ from flask_cors import CORS
 import os
 
 from src import auth
+from src import db
 
 
 # name = request.headers["name"]  # localhost:5000/login headers= {'name': 'someones name}
@@ -76,6 +77,8 @@ def signup():
     # TODO check if email already exists in the db
     if 1 == 0:
         return jsonify({'status': 400, 'error': 'user-already-exists'})
+    else:
+        db.signUpDb(first_name,last_name,email,password)
 
     return ""
 
@@ -86,4 +89,10 @@ def forgot_password():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    cert = os.getenv('DOMAIN_CERT')
+    key = os.getenv('PRIVATE_KEY')
+
+    if cert is None or key is None:
+        app.run(debug=True, host='0.0.0.0')
+    else:
+        app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
