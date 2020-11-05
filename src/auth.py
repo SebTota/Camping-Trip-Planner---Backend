@@ -1,4 +1,5 @@
 import requests
+from flask import request
 import os
 import bcrypt
 import hashlib
@@ -6,12 +7,16 @@ import base64
 
 # Global variables
 g_recaptcha_secret = os.getenv('RECAPTCHA_SECRET')
+if g_recaptcha_secret == '':
+    print("ERROR: missing recaptcha secret")
+    exit(-1)
 
 
 def verify_recaptcha(g_recaptcha_response) -> bool:
     recap_status = requests.post('https://www.google.com/recaptcha/api/siteverify', data={
         'secret': g_recaptcha_secret,
-        'response': g_recaptcha_response
+        'response': g_recaptcha_response,
+        'remoteip': request.remote_addr
     })
     return recap_status.json()['success']
 

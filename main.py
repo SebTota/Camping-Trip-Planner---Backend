@@ -13,9 +13,14 @@ app = Flask(__name__)
 CORS(app)
 
 
+# Verify recaptcha is authenticated before checking password (prevent bot spamming)
 def captcha_check(protected_function):
     @wraps(protected_function)
     def wrapper(*args, **kwargs):
+        # Skip check on localhost
+        if request.remote_addr == '127.0.0.1':
+            return protected_function(*args, **kwargs)
+
         data = request.get_json(force=True)  # Force body to be read as JSON
         g_recaptcha_response = data.get('recap_response')
 
@@ -62,12 +67,11 @@ def signup():
     last_name = data.get('last_name')
     email = data.get('email')
     password = data.get('password')
-    g_recaptcha_response = data.get('recap_response')
+    password_conf = data.get('password_conf')
 
-    # Verify recaptcha is authenticated before checking password (prevent bot spamming)
-    if not auth.verify_recaptcha(g_recaptcha_response):
-        # Failed re-captcha verification
-        return jsonify({'status': 401, 'error': 'failed-recaptcha'})
+    # Assert password and password confirmation input is the same
+    if password != password_conf:
+        return jsonify({'status': 400, 'error': 'failed-password-confirmation'})
 
     # TODO check if email already exists in the db
     if 1 == 0:
@@ -82,10 +86,4 @@ def forgot_password():
 
 
 if __name__ == '__main__':
-    cert = os.getenv('DOMAIN_CERT')
-    key = os.getenv('PRIVATE_KEY')
-
-    if cert == '' or key == '':
-        app.run(debug=True, host='0.0.0.0')
-    else:
-        app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
+    app.run(debug=True)
