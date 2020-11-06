@@ -35,6 +35,19 @@ def captcha_check(protected_function):
     return wrapper
 
 
+# Verify user is signed in before allowing access to endpoint
+def user_check(protected_function):
+    @wraps(protected_function)
+    def wrapper(*args, **kwargs):
+        user_session = session.get('username', '')
+
+        if user_session == '':
+            return jsonify({'status': 401, 'error': 'no-session-found'})
+
+        return protected_function(*args, **kwargs)
+    return wrapper
+
+
 @app.after_request
 def add_header(response):
     response.headers['Access-Control-Allow-Credentials'] = 'true'
@@ -100,14 +113,10 @@ def forgot_password():
     return ""
 
 
+@user_check
 @app.route('/checkLogin', methods=['GET'])
 def check_login():
-    user_session = session.get('username', '')
-
-    if user_session == '':
-        return jsonify({'status': 401, 'error': 'no-session-found'})
-    else:
-        return jsonify({'status': 200})
+    return jsonify({"status": 200})
 
 
 if __name__ == '__main__':
