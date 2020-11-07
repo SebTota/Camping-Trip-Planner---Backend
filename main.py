@@ -1,16 +1,17 @@
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify, request, session, redirect
 from functools import wraps
 from flask_cors import CORS
 import os
+from flask_session import Session
 
 from src import auth
 from src import db
-
 
 # name = request.headers["name"]  # localhost:5000/login headers= {'name': 'someones name}
 # name = request.args["name"]  # localhost:5000/login?name=sebastian
 
 app = Flask(__name__)
+app.secret_key = os.getenv('SESSION_SECRET')
 CORS(app)
 
 
@@ -31,7 +32,27 @@ def captcha_check(protected_function):
             return jsonify({'status': 401, 'error': 'failed-recaptcha'})
 
         return protected_function(*args, **kwargs)
+
     return wrapper
+
+
+# Verify user is signed in before allowing access to endpoint
+def user_check(protected_function):
+    @wraps(protected_function)
+    def wrapper(*args, **kwargs):
+        user_session = session.get('username', '')
+
+        if user_session == '':
+            return jsonify({'status': 401, 'error': 'no-session-found'})
+
+        return protected_function(*args, **kwargs)
+    return wrapper
+
+
+@app.after_request
+def add_header(response):
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
 
 
 @app.route('/', methods=['GET'])
@@ -54,6 +75,7 @@ def login():
     # Authenticate users account and password
     if auth.verify_password(email, password):
         # Password is correct, return temporary session ID
+        session['username'] = 'testUsername'
         return jsonify({'status': 200, 'email': email, 'session_id': '123abc456def'})
     else:
         # Incorrect password specified, return Unauthorized Code
@@ -83,9 +105,21 @@ def signup():
     return ""
 
 
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return jsonify({'status': 200})
+
+
 @app.route('/forgotPassword', methods=['POST'])
 def forgot_password():
     return ""
+
+
+@user_check
+@app.route('/checkLogin', methods=['GET'])
+def check_login():
+    return jsonify({"status": 200})
 
 
 if __name__ == '__main__':
