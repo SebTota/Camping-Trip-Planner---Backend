@@ -23,32 +23,33 @@ def sign_up_db(first_name, last_name, email, password):
 
 def check_if_user_exists_by_email(email):
     cursor = my_db.cursor()
-    cursor.execute("SELECT Users_Email FROM Tbl_Users")
-    emails = cursor.fetchall()
+    sql = "SELECT COUNT(1) FROM Tbl_Users WHERE Users_Email = %s"
+    cursor.execute(sql, (email,))
 
-    for row in emails:
-        if email in row:
-            print("Email exists")
-            return True
-        else:
-            print("Email does not exist")
-            return False
+    res = cursor.fetchall()
+
+    if res[0][0] == 0:
+        print("Email does not exist")
+        return False
+    else:
+        print("Email exists")
+        return True
 
 
 def check_if_username_exists(username):
     cursor = my_db.cursor()
-    cursor.execute("SELECT Users_Username FROM Tbl_Users")
-    usernames = cursor.fetchall()
+    sql = "SELECT COUNT(1) FROM Tbl_Users WHERE Users_Username = %s"
+    cursor.execute(sql, (username,))
 
-    for row in usernames:
-        if username in row:
-            print("Username exists")
-            return True
-        else:
-            print("Username does not exist")
-            return False
+    res = cursor.fetchall()
 
-
+    if res[0][0] == 0:
+        print("Username does not exist")
+        return False
+    else:
+        print("Username exists")
+        return True
 
 if __name__ == '__main__':
-    check_if_username_exists("guy")
+    username = "guy"
+    check_if_username_exists(username)

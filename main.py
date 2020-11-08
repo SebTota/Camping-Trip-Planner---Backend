@@ -75,7 +75,7 @@ def signup():
         return jsonify({'status': 400, 'error': 'failed-password-confirmation'})
 
     # TODO check if email already exists in the db
-    if 1 == 0:
+    if db.check_if_user_exists_by_email(email):
         return jsonify({'status': 400, 'error': 'user-already-exists'})
     else:
         db.sign_up_db(first_name, last_name, email, password)
