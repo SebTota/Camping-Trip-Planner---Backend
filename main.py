@@ -78,7 +78,7 @@ def signup():
     if 1 == 0:
         return jsonify({'status': 400, 'error': 'user-already-exists'})
     else:
-        db.signUpDb(first_name,last_name,email,password)
+        db.sign_up_db(first_name, last_name, email, password)
 
     return ""
 
