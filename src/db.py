@@ -35,5 +35,20 @@ def check_if_user_exists_by_email(email):
             return False
 
 
+def check_if_username_exists(username):
+    cursor = my_db.cursor()
+    cursor.execute("SELECT Users_Username FROM Tbl_Users")
+    usernames = cursor.fetchall()
+
+    for row in usernames:
+        if username in row:
+            print("Username exists")
+            return True
+        else:
+            print("Username does not exist")
+            return False
+
+
+
 if __name__ == '__main__':
-    check_if_user_exists_by_email("test@gmail.com")
+    check_if_username_exists("guy")
