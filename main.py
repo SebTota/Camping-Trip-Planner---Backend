@@ -5,6 +5,7 @@ import os
 from flask_session import Session
 
 from src import auth
+from src import db
 
 # name = request.headers["name"]  # localhost:5000/login headers= {'name': 'someones name}
 # name = request.args["name"]  # localhost:5000/login?name=sebastian
@@ -96,8 +97,10 @@ def signup():
         return jsonify({'status': 400, 'error': 'failed-password-confirmation'})
 
     # TODO check if email already exists in the db
-    if 1 == 0:
+    if db.check_if_user_exists_by_email(email):
         return jsonify({'status': 400, 'error': 'user-already-exists'})
+    else:
+        db.sign_up_db(first_name, last_name, email, password)
 
     return ""
 
@@ -123,4 +126,10 @@ def check_login():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    cert = os.getenv('DOMAIN_CERT')
+    key = os.getenv('PRIVATE_KEY')
+
+    if cert is None or key is None:
+        app.run(debug=True, host='0.0.0.0')
+    else:
+        app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
