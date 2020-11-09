@@ -101,6 +101,7 @@ def signup():
         return jsonify({'status': 400, 'error': 'user-already-exists'})
     else:
         db.sign_up_db(first_name, last_name, email, password)
+        # db.get_password(email)
 
     return ""
 
