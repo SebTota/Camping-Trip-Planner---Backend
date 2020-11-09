@@ -50,6 +50,22 @@ def check_if_username_exists(username):
         print("Username exists")
         return True
 
+
+def get_password(email):
+    cursor = my_db.cursor()
+    sql = "SELECT Users_Password FROM Tbl_Users WHERE Users_Email = %s"
+    cursor.execute(sql, (email,))
+
+    res = cursor.fetchall()
+
+    if len(res) == 0:
+        return {"found": False, "pass": ""}
+    else:
+        return {"found": True, "pass": res[0][0]}
+
+
 if __name__ == '__main__':
-    username = "guy"
-    check_if_username_exists(username)
+    # username = "guy"
+    # check_if_username_exists(username)
+    email = "test@gmail.com"
+    print(get_password(email))
