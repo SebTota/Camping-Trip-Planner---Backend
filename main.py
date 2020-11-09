@@ -14,6 +14,12 @@ app.secret_key = os.getenv('SESSION_SECRET')
 CORS(app)
 
 
+@app.after_request
+def add_header(response):
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
+
 # Verify recaptcha is authenticated before checking password (prevent bot spamming)
 def captcha_check(protected_function):
     @wraps(protected_function)
@@ -46,12 +52,6 @@ def user_check(protected_function):
 
         return protected_function(*args, **kwargs)
     return wrapper
-
-
-@app.after_request
-def add_header(response):
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    return response
 
 
 @app.route('/', methods=['GET'])
@@ -105,7 +105,7 @@ def signup():
 @app.route('/logout')
 def logout():
     session.pop('username', None)
-    return jsonify({'status': 200})
+    return jsonify({'status': 200}), 200
 
 
 @app.route('/forgotPassword', methods=['POST'])
@@ -113,10 +113,13 @@ def forgot_password():
     return ""
 
 
-@user_check
 @app.route('/checkLogin', methods=['GET'])
 def check_login():
-    return jsonify({"status": 200})
+    user_session = session.get('username', '')
+
+    if user_session == '':
+        return jsonify({'status': 401, 'error': 'no-session-found'}), 401
+    return jsonify({"status": 200}), 200
 
 
 if __name__ == '__main__':
