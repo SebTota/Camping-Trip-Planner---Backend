@@ -50,6 +50,51 @@ def check_if_username_exists(username):
         print("Username exists")
         return True
 
+
+def get_username_by_email(email) -> dict:
+    cursor = my_db.cursor()
+    sql = "SELECT Users_Username FROM Tbl_Users WHERE Users_Email = %s"
+    cursor.execute(sql, (email,))
+
+    res = cursor.fetchall()
+
+    if len(res) == 0:
+        return {"found": False, "username": ""}
+    else:
+        return {"found": True, "username": res[0][0]}
+
+
+def get_pass_by_email(email) -> dict:
+    cursor = my_db.cursor()
+    sql = "SELECT Users_Password FROM Tbl_Users WHERE Users_Email = %s"
+    cursor.execute(sql, (email,))
+
+    res = cursor.fetchall()
+
+    if len(res) == 0:
+        return {"found": False, "pass": ""}
+    else:
+        return {"found": True, "pass": res[0][0]}
+
+
+def get_profile_by_email(email) -> dict:
+    cursor = my_db.cursor()
+    sql = "SELECT Users_First_Name, Users_Last_Name, Users_Username FROM Tbl_Users WHERE Users_Email = %s"
+    cursor.execute(sql, (email,))
+
+    res = cursor.fetchall()
+
+    if len(res) == 0:
+        return {"found": False, "profile": ""}
+    else:
+        return {"found": True, "profile": {
+            "first_name": res[0][0],
+            "last_name": res[0][1],
+            "full_name": res[0][0].strip().title() + " " + res[0][1].strip().title(),
+            "user_name": res[0][2]
+        }}
+
+
 if __name__ == '__main__':
     username = "guy"
-    check_if_username_exists(username)
+    print(get_pass_by_email("seb1tota@gmail.com"))

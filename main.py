@@ -1,7 +1,8 @@
 from flask import Flask, jsonify, request, session, redirect
 from functools import wraps
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import os
+import sys
 from flask_session import Session
 
 from src import auth
@@ -12,7 +13,11 @@ from src import db
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SESSION_SECRET')
+#SESSION_TYPE = 'memcached'
+app.config.from_object(__name__)
+#Session(app)
 CORS(app)
+#cors = CORS(app, resources={r"/*": {"origins": "http://localhost:8080"}})
 
 
 @app.after_request
@@ -46,9 +51,9 @@ def captcha_check(protected_function):
 def user_check(protected_function):
     @wraps(protected_function)
     def wrapper(*args, **kwargs):
-        user_session = session.get('username', '')
+        user_session = session.get('email', None)
 
-        if user_session == '':
+        if user_session is None:
             return jsonify({'status': 401, 'error': 'no-session-found'})
 
         return protected_function(*args, **kwargs)
@@ -75,8 +80,12 @@ def login():
     # Authenticate users account and password
     if auth.verify_password(email, password):
         # Password is correct, return temporary session ID
-        session['username'] = 'testUsername'
-        return jsonify({'status': 200, 'email': email, 'session_id': '123abc456def'})
+        username_query = db.get_username_by_email(email)
+        if username_query['found']:
+            session['email'] = email
+            return jsonify({'status': 200, 'email': email})
+        else:
+            return jsonify({'status': 404, 'error': 'user-email-not-found'})
     else:
         # Incorrect password specified, return Unauthorized Code
         return jsonify({'status': 401, 'error': 'incorrect-password'})
@@ -96,19 +105,12 @@ def signup():
     if password != password_conf:
         return jsonify({'status': 400, 'error': 'failed-password-confirmation'})
 
-    # TODO check if email already exists in the db
     if db.check_if_user_exists_by_email(email):
         return jsonify({'status': 400, 'error': 'user-already-exists'})
     else:
-        db.sign_up_db(first_name, last_name, email, password)
-
-    return ""
-
-
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return jsonify({'status': 200}), 200
+        db.sign_up_db(first_name, last_name, email, auth.hash_pass(password))
+        session['email'] = email
+        return jsonify({'status': 200})
 
 
 @app.route('/forgotPassword', methods=['POST'])
@@ -118,11 +120,21 @@ def forgot_password():
 
 @app.route('/checkLogin', methods=['GET'])
 def check_login():
-    user_session = session.get('username', '')
+    if 'email' not in session:
+        return jsonify({'status': 401, 'error': 'no-session-found'}), 200
 
-    if user_session == '':
-        return jsonify({'status': 401, 'error': 'no-session-found'}), 401
-    return jsonify({"status": 200}), 200
+    user_session = session.get('email', '')
+    profile_query = db.get_profile_by_email(user_session)
+    if profile_query['found']:
+        return jsonify({"status": 200,  "profile": profile_query['profile']}), 200
+
+
+@app.route('/logout', methods=['POST', 'GET'])
+def logout():
+    print(session, file=sys.stdout)
+    session.clear()
+    print(session.pop('email', None), file=sys.stdout)
+    return jsonify({'status': 200}), 200
 
 
 if __name__ == '__main__':
