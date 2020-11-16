@@ -1,5 +1,6 @@
 import mysql.connector
 import os
+import uuid
 
 my_db = mysql.connector.connect(
     host=os.getenv("DB_HOST"),
@@ -27,6 +28,7 @@ def check_if_user_exists_by_email(email):
     cursor.execute(sql, (email,))
 
     res = cursor.fetchall()
+    cursor.close()
 
     if res[0][0] == 0:
         print("Email does not exist")
@@ -42,6 +44,7 @@ def check_if_username_exists(username):
     cursor.execute(sql, (username,))
 
     res = cursor.fetchall()
+    cursor.close()
 
     if res[0][0] == 0:
         print("Username does not exist")
@@ -57,6 +60,7 @@ def get_username_by_email(email) -> dict:
     cursor.execute(sql, (email,))
 
     res = cursor.fetchall()
+    cursor.close()
 
     if len(res) == 0:
         return {"found": False, "username": ""}
@@ -70,6 +74,7 @@ def get_pass_by_email(email) -> dict:
     cursor.execute(sql, (email,))
 
     res = cursor.fetchall()
+    cursor.close()
 
     if len(res) == 0:
         return {"found": False, "pass": ""}
@@ -83,6 +88,7 @@ def get_profile_by_email(email) -> dict:
     cursor.execute(sql, (email,))
 
     res = cursor.fetchall()
+    cursor.close()
 
     if len(res) == 0:
         return {"found": False, "profile": ""}
@@ -95,6 +101,69 @@ def get_profile_by_email(email) -> dict:
         }}
 
 
+def add_group_request(from_user_email, to_user_email, group_uuid):
+    cursor = my_db.cursor()
+    request_uuid = str(uuid.uuid4())
+    sql = "INSERT INTO Tbl_Group_Requests (Request_User_To, Request_User_From, Request_Group_id, Request_Uuid) " \
+          "SELECT " \
+          "(SELECT _id FROM Tbl_Users WHERE Users_Email = %s) AS TO_USER, " \
+          "(SELECT _id FROM Tbl_Users WHERE Users_Email = %s) AS FROM_USER, " \
+          "(SELECT _id FROM Tbl_Groups WHERE Groups_Uuid = %s) AS GROUP_UUID, " \
+          "%s"
+
+    cursor.execute(sql, (to_user_email, from_user_email, group_uuid, request_uuid))
+    my_db.commit()
+    cursor.close()
+
+
+def get_group_requests(user_email):
+    cursor = my_db.cursor()
+    sql = "SELECT Users_First_Name, Users_Last_Name, Request_Uuid, Group_Name FROM Tbl_Users INNER JOIN " \
+          "(SELECT Tbl_Groups.Groups_Uuid, Tbl_Groups.Group_Name, Tbl_Group_Requests.Request_User_From, Tbl_Group_Requests.Request_Uuid FROM Tbl_Users " \
+          "INNER JOIN Tbl_Group_Requests ON Tbl_Users._id = Tbl_Group_Requests.Request_User_To " \
+          "INNER JOIN Tbl_Groups ON Tbl_Group_Requests.Request_Group_id = Tbl_Groups._id " \
+          "WHERE Tbl_Users.Users_Email = %s) " \
+          "AS res on res.Request_User_From = Tbl_Users._id"
+
+    cursor.execute(sql, (user_email,))
+
+    res = cursor.fetchall()
+    cursor.close()
+
+    if len(res) == 0:
+        return []
+    else:
+        d1 = list(dict())
+        for i in range(len(res)):
+            d1.append({
+                "invite-from": res[i][0].strip().title() + " " + res[i][1].strip().title(),
+                'group-name': res[i][3],
+                'request-uuid': res[i][2]
+            })
+        return d1
+
+
+def remove_group_invite_request(request_uuid):
+    cursor = my_db.cursor()
+    sql = "DELETE FROM Tbl_Group_Requests WHERE Request_Uuid = %s"
+    cursor.execute(sql, (request_uuid,))
+    my_db.commit()
+    cursor.close()
+
+
+def accept_group_invite_request(email, request_uuid):
+    cursor = my_db.cursor()
+    sql = "INSERT INTO Tbl_Group_Users(Group_Id, User_Id) " \
+          "SELECT " \
+          "(SELECT Request_Group_id FROM Tbl_Group_Requests WHERE Request_Uuid = %s), " \
+          "(SELECT _id FROM Tbl_Users WHERE Users_Email = %s)"
+    cursor.execute(sql, (request_uuid, email))
+    my_db.commit()
+    cursor.close()
+    remove_group_invite_request(request_uuid)
+
+
 if __name__ == '__main__':
-    username = "guy"
-    print(get_pass_by_email("seb1tota@gmail.com"))
+    add_group_request('seb1@gmail.com', 'tui43030@temple.edu', '2194d399-b955-49d3-a242-4eebbc4f8d23')
+    add_group_request('seb1tota@gmail.com', 'tui43030@temple.edu', 'ba36f7ca-e8d2-42f9-9b65-ec9dc9fc51f2')
+    #print(get_group_requests('tui43030@temple.edu'))
