@@ -1,7 +1,11 @@
 import mysql.connector
+import mysql.connector.pooling
 import os
 
+
 my_db = mysql.connector.connect(
+    pool_name="mypool",
+    pool_size=3,
     host=os.getenv("DB_HOST"),
     user=os.getenv("DB_USER"),
     password=os.getenv("DB_PASS"),
@@ -100,4 +104,4 @@ def edit_element(new, element):
 if __name__ == '__main__':
     thing = "trail mix"
     thing2 = "gum"
-    edit_element(thing2, thing)
+    edit_element(thing, thing2)
