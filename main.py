@@ -4,6 +4,8 @@ from flask_cors import CORS, cross_origin
 import os
 import sys
 from flask_session import Session
+import uuid
+import time
 
 from src import auth
 from src import db
@@ -13,16 +15,17 @@ from src import db
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SESSION_SECRET')
-#SESSION_TYPE = 'memcached'
-app.config.from_object(__name__)
-#Session(app)
-CORS(app)
-#cors = CORS(app, resources={r"/*": {"origins": "http://localhost:8080"}})
+# app.config.from_object(__name__)
+cors = CORS(app)
 
 
 @app.after_request
 def add_header(response):
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('CORS_SUPPORTS_CREDENTIALS', 'true')
+    #response.headers['Access-Control-Allow-Credentials'] = 'true'
+    #response.headers['CORS_SUPPORTS_CREDENTIALS'] = 'true'
     return response
 
 
@@ -83,12 +86,12 @@ def login():
         username_query = db.get_username_by_email(email)
         if username_query['found']:
             session['email'] = email
-            return jsonify({'status': 200, 'email': email})
+            return jsonify({'status': 200, 'email': email}), 200
         else:
-            return jsonify({'status': 404, 'error': 'user-email-not-found'})
+            return jsonify({'status': 404, 'error': 'user-email-not-found'}), 404
     else:
         # Incorrect password specified, return Unauthorized Code
-        return jsonify({'status': 401, 'error': 'incorrect-password'})
+        return jsonify({'status': 401, 'error': 'incorrect-password'}), 401
 
 
 @app.route('/signup', methods=['POST'])
@@ -124,17 +127,71 @@ def check_login():
         return jsonify({'status': 401, 'error': 'no-session-found'}), 200
 
     user_session = session.get('email', '')
-    profile_query = db.get_profile_by_email(user_session)
-    if profile_query['found']:
-        return jsonify({"status": 200,  "profile": profile_query['profile']}), 200
+
+    if user_session != '':
+        profile_query = db.get_profile_by_email(user_session)
+        if profile_query['found']:
+            return jsonify({"status": 200,  "profile": profile_query['profile']}), 200
+
+    return jsonify({'status': 401, 'error': 'no-session-found'}), 200
 
 
 @app.route('/logout', methods=['POST', 'GET'])
 def logout():
     print(session, file=sys.stdout)
-    session.clear()
     print(session.pop('email', None), file=sys.stdout)
-    return jsonify({'status': 200}), 200
+
+    response = jsonify({'status': 200}), 200
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:63342')
+    return response
+
+
+@app.route('/inviteUser', methods=['POST'])
+def invite_user():
+    data = request.get_json(force=True)
+    from_user_email = session.get('email', '')
+    to_user_email = data['invite-user-email']
+    group_uuid = data['group-uuid']
+
+    db.add_group_request(from_user_email, to_user_email, group_uuid)
+    return jsonify({'status': 200})
+
+
+@app.route('/getGroupInvites', methods=['GET'])
+def get_group_invites():
+    user_email = session.get('email', None)
+    if user_email is None:
+        return jsonify({'status': 400})
+
+    return jsonify({'status': 200, 'invites': db.get_group_requests(user_email)})
+
+
+@app.route('/acceptGroupInvite', methods=['POST'])
+def accept_group_invite():
+    data = request.get_json(force=True)
+
+    user_email = session.get('email', None)
+    if user_email is None:
+        return jsonify({'status': 400})
+
+    if 'request-uuid' in data:
+        db.accept_group_invite_request(user_email, data['request-uuid'])
+        return jsonify({'status': 200})
+    else:
+        # Missing request uuid so nothing to decline
+        return jsonify({'status': 400, 'error': 'missing-uuid'})
+
+
+@app.route('/declineGroupInvite', methods=['POST'])
+def decline_group_invite():
+    data = request.get_json(force=True)
+
+    if 'request-uuid' in data:
+        db.remove_group_invite_request(data['request-uuid'])
+        return jsonify({'status': 200})
+    else:
+        # Missing request uuid so nothing to decline
+        return jsonify({'status': 400, 'error': 'missing-uuid'})
 
 
 if __name__ == '__main__':
