@@ -118,6 +118,62 @@ def edit_element(new, element):
     my_db.close()
 
 
+def get_user_id_by_username(user_name):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    cmd = "SELECT _id FROM Tbl_Users WHERE Users_Username = %s"
+
+    vls = (user_name,)
+    cursor.execute(cmd, vls)
+
+    res = cursor.fetchall()
+    cursor.close()
+    my_db.close()
+
+    if len(res) == 0:
+        return {"found": False, "user_id": "does not exist"}
+    else:
+        return {"found": True, "user_id": res[0][0]}
+
+
+def delete_user_from_group(user_name):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+
+    user_id = get_user_id_by_username(user_name)
+
+    cmd = "DELETE FROM Tbl_Group_Users WHERE User_Id= (%s)"
+
+    vls = (user_id,)
+    cursor.execute(cmd, str(vls))
+
+    cursor.close()
+    my_db.close()
+
+
+def get_group_by_user(user_name):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+
+    user_id = get_user_id_by_username(user_name)
+
+    cmd = "SELECT Group_Id FROM Tbl_Group_Users WHERE User_Id = %s"
+
+    vls = (user_id,)
+    cursor.execute(cmd, vls)
+
+    res = cursor.fetchall()
+    cursor.close()
+    my_db.close()
+
+    if len(res) == 0:
+        return {"found": False, "group_id": "user doesn't belong to a group"}
+    else:
+        return {"found": True, "user_id": res[0][0]}
+
+
 if __name__ == '__main__':
-    email = "seb100@gmail.com"
-    check_if_user_exists_by_email(email)
+    email = "tui43030@temple.edu"
+    print(get_group_by_user(email))
+
+
