@@ -1,8 +1,11 @@
 from flask import Flask, jsonify, request, session, redirect
 from functools import wraps
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import os
+import sys
 from flask_session import Session
+import uuid
+import time
 
 from src import auth
 from src import db
@@ -12,7 +15,18 @@ from src import db
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SESSION_SECRET')
-CORS(app)
+# app.config.from_object(__name__)
+cors = CORS(app)
+
+
+@app.after_request
+def add_header(response):
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('CORS_SUPPORTS_CREDENTIALS', 'true')
+    #response.headers['Access-Control-Allow-Credentials'] = 'true'
+    #response.headers['CORS_SUPPORTS_CREDENTIALS'] = 'true'
+    return response
 
 
 # Verify recaptcha is authenticated before checking password (prevent bot spamming)
@@ -40,19 +54,13 @@ def captcha_check(protected_function):
 def user_check(protected_function):
     @wraps(protected_function)
     def wrapper(*args, **kwargs):
-        user_session = session.get('username', '')
+        user_session = session.get('email', None)
 
-        if user_session == '':
+        if user_session is None:
             return jsonify({'status': 401, 'error': 'no-session-found'})
 
         return protected_function(*args, **kwargs)
     return wrapper
-
-
-@app.after_request
-def add_header(response):
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    return response
 
 
 @app.route('/', methods=['GET'])
@@ -75,11 +83,15 @@ def login():
     # Authenticate users account and password
     if auth.verify_password(email, password):
         # Password is correct, return temporary session ID
-        session['username'] = 'testUsername'
-        return jsonify({'status': 200, 'email': email, 'session_id': '123abc456def'})
+        username_query = db.get_username_by_email(email)
+        if username_query['found']:
+            session['email'] = email
+            return jsonify({'status': 200, 'email': email}), 200
+        else:
+            return jsonify({'status': 404, 'error': 'user-email-not-found'}), 404
     else:
         # Incorrect password specified, return Unauthorized Code
-        return jsonify({'status': 401, 'error': 'incorrect-password'})
+        return jsonify({'status': 401, 'error': 'incorrect-password'}), 401
 
 
 @app.route('/signup', methods=['POST'])
@@ -96,20 +108,12 @@ def signup():
     if password != password_conf:
         return jsonify({'status': 400, 'error': 'failed-password-confirmation'})
 
-    # TODO check if email already exists in the db
     if db.check_if_user_exists_by_email(email):
         return jsonify({'status': 400, 'error': 'user-already-exists'})
     else:
-        db.sign_up_db(first_name, last_name, email, password)
-        # db.get_password(email)
-
-    return ""
-
-
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return jsonify({'status': 200})
+        db.sign_up_db(first_name, last_name, email, auth.hash_pass(password))
+        session['email'] = email
+        return jsonify({'status': 200})
 
 
 @app.route('/forgotPassword', methods=['POST'])
@@ -117,10 +121,77 @@ def forgot_password():
     return ""
 
 
-@user_check
 @app.route('/checkLogin', methods=['GET'])
 def check_login():
-    return jsonify({"status": 200})
+    if 'email' not in session:
+        return jsonify({'status': 401, 'error': 'no-session-found'}), 200
+
+    user_session = session.get('email', '')
+
+    if user_session != '':
+        profile_query = db.get_profile_by_email(user_session)
+        if profile_query['found']:
+            return jsonify({"status": 200,  "profile": profile_query['profile']}), 200
+
+    return jsonify({'status': 401, 'error': 'no-session-found'}), 200
+
+
+@app.route('/logout', methods=['POST', 'GET'])
+def logout():
+    print(session, file=sys.stdout)
+    print(session.pop('email', None), file=sys.stdout)
+
+    response = jsonify({'status': 200}), 200
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:63342')
+    return response
+
+
+@app.route('/inviteUser', methods=['POST'])
+def invite_user():
+    data = request.get_json(force=True)
+    from_user_email = session.get('email', '')
+    to_user_email = data['invite-user-email']
+    group_uuid = data['group-uuid']
+
+    db.add_group_request(from_user_email, to_user_email, group_uuid)
+    return jsonify({'status': 200})
+
+
+@app.route('/getGroupInvites', methods=['GET'])
+def get_group_invites():
+    user_email = session.get('email', None)
+    if user_email is None:
+        return jsonify({'status': 400})
+
+    return jsonify({'status': 200, 'invites': db.get_group_requests(user_email)})
+
+
+@app.route('/acceptGroupInvite', methods=['POST'])
+def accept_group_invite():
+    data = request.get_json(force=True)
+
+    user_email = session.get('email', None)
+    if user_email is None:
+        return jsonify({'status': 400})
+
+    if 'request-uuid' in data:
+        db.accept_group_invite_request(user_email, data['request-uuid'])
+        return jsonify({'status': 200})
+    else:
+        # Missing request uuid so nothing to decline
+        return jsonify({'status': 400, 'error': 'missing-uuid'})
+
+
+@app.route('/declineGroupInvite', methods=['POST'])
+def decline_group_invite():
+    data = request.get_json(force=True)
+
+    if 'request-uuid' in data:
+        db.remove_group_invite_request(data['request-uuid'])
+        return jsonify({'status': 200})
+    else:
+        # Missing request uuid so nothing to decline
+        return jsonify({'status': 400, 'error': 'missing-uuid'})
 
 
 if __name__ == '__main__':
