@@ -165,9 +165,21 @@ def add_group_request(from_user_email, to_user_email, group_uuid):
           "(SELECT _id FROM Tbl_Users WHERE Users_Email = %s) AS TO_USER, " \
           "(SELECT _id FROM Tbl_Users WHERE Users_Email = %s) AS FROM_USER, " \
           "(SELECT _id FROM Tbl_Groups WHERE Groups_Uuid = %s) AS GROUP_UUID, " \
-          "%s"
+          "%s " \
+          "WHERE " \
+          "(SELECT COUNT(1) FROM Tbl_Users " \
+          "INNER JOIN Tbl_Group_Users ON Tbl_Group_Users.User_Id = Tbl_Users._id " \
+          "INNER JOIN Tbl_Groups ON Tbl_Group_Users.Group_Id = Tbl_Groups._id " \
+          "WHERE Tbl_Users.Users_Email = %s AND Tbl_Groups.Groups_Uuid = %s) = 0 " \
+          "AND (SELECT COUNT(1) FROM Tbl_Users " \
+          "INNER JOIN Tbl_Group_Requests ON Tbl_Group_Requests.Request_User_To = Tbl_Users._id " \
+          "INNER JOIN Tbl_Groups ON Tbl_Group_Requests.Request_Group_id = Tbl_Groups._id " \
+          "WHERE Tbl_Users.Users_Email = %s " \
+          "AND Tbl_Groups.Groups_Uuid = %s) = 0"
 
-    cursor.execute(sql, (to_user_email, from_user_email, group_uuid, request_uuid))
+    cursor.execute(sql, (to_user_email, from_user_email, group_uuid, request_uuid,
+                         to_user_email, group_uuid, to_user_email, group_uuid))
+    print(cursor.statement)
     my_db.commit()
     cursor.close()
     my_db.close()

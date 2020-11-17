@@ -140,10 +140,9 @@ def check_login():
 def logout():
     print(session, file=sys.stdout)
     print(session.pop('email', None), file=sys.stdout)
+    session['email'] = ''
 
-    response = jsonify({'status': 200}), 200
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:63342')
-    return response
+    return jsonify({'status': 200}), 200
 
 
 @app.route('/inviteUser', methods=['POST'])
@@ -152,6 +151,9 @@ def invite_user():
     from_user_email = session.get('email', '')
     to_user_email = data['invite-user-email']
     group_uuid = data['group-uuid']
+
+    if from_user_email == '' or to_user_email == '' or group_uuid == '':
+        return jsonify({'status': 400})
 
     db.add_group_request(from_user_email, to_user_email, group_uuid)
     return jsonify({'status': 200})
