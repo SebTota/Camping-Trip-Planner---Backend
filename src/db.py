@@ -172,8 +172,10 @@ def get_group_by_user(user_name):
         return {"found": True, "user_id": res[0][0]}
 
 
+# def get_list_by_group_id(group_id):
+
+
 if __name__ == '__main__':
     email = "tui43030@temple.edu"
     print(get_group_by_user(email))
-
 
