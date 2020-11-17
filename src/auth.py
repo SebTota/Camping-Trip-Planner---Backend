@@ -5,6 +5,8 @@ import bcrypt
 import hashlib
 import base64
 
+from src import db
+
 # Global variables
 g_recaptcha_secret = os.getenv('RECAPTCHA_SECRET')
 if g_recaptcha_secret == '':
@@ -20,22 +22,22 @@ def verify_recaptcha(g_recaptcha_response) -> bool:
     return recap_status.json()['success']
 
 
-def new_user(email, password):
+def hash_pass(password):
     # Encode password to allow longer length passwords (limitation of bcrypt = 72 character max length)
     encoded_pass = base64.b64encode(hashlib.sha256(password.encode('utf-8')).digest())
     # Hash encoded password with salt
     # pass_hash includes hash and salt
-    pass_hash = bcrypt.hashpw(encoded_pass, bcrypt.gensalt())
-
-    # TODO Add new user to the Users db table
+    return bcrypt.hashpw(encoded_pass, bcrypt.gensalt())
 
 
 def verify_password(email, password) -> bool:
     # Encode password to allow longer length passwords (limitation of bcrypt = 72 character max length)
     encoded_pass = base64.b64encode(hashlib.sha256(password.encode('utf-8')).digest())
 
-    # TODO Get hashed password from db based on email (check if email exists first)
     # Get hashed password from db
-    hashed_pass = b'$2b$12$mrPTNVwF3VYvmmhTfO/mi.BxiMfoSY7bo717veVkq10VCAngzI1fW'
+    password_query = db.get_pass_by_email(email)
+    # Check if user is found before verifying password
+    if password_query['found']:
+        return bcrypt.checkpw(encoded_pass, password_query['pass'].encode('utf-8'))
 
-    return bcrypt.checkpw(encoded_pass, hashed_pass)
+    return False
