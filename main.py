@@ -136,7 +136,7 @@ def check_login():
     return jsonify({'status': 401, 'error': 'no-session-found'}), 200
 
 
-@app.route('/logout', methods=['POST', 'GET'])
+@app.route('/logout', methods=['POST'])
 def logout():
     print(session, file=sys.stdout)
     print(session.pop('email', None), file=sys.stdout)
@@ -146,6 +146,7 @@ def logout():
 
 
 @app.route('/inviteUser', methods=['POST'])
+@user_check
 def invite_user():
     data = request.get_json(force=True)
     from_user_email = session.get('email', '')
@@ -194,6 +195,27 @@ def decline_group_invite():
     else:
         # Missing request uuid so nothing to decline
         return jsonify({'status': 400, 'error': 'missing-uuid'})
+
+
+@app.route('/getGroupsByUser', methods=['GET'])
+def get_group_by_user():
+    user_email = session.get('email', None)
+
+    if user_email is None:
+        return jsonify({'status': 400})
+    else:
+        return jsonify({
+            'groups': [
+                {
+                    'group-name': 'Testing Group',
+                    'group-uuid': 'ba36f7ca-e8d2-42f9-9b65-ec9dc9fc51f2'
+                 },
+                {
+                    'group-name': 'Testing Group 2',
+                    'group-uuid': '2194d399-b955-49d3-a242-4eebbc4f8d23'
+                }
+            ]
+        })
 
 
 if __name__ == '__main__':
