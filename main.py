@@ -21,11 +21,13 @@ cors = CORS(app)
 
 @app.after_request
 def add_header(response):
+    response.headers.add("Access-Control-Allow-Origin", "http://localhost:63342")
+    response.headers.add("Access-Control-Allow-Credentials", "true")
+    response.headers.add('Access-Control-Request-Headers', 'access-control-allow-credentials, access-control-allow-origin')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
     response.headers.add('CORS_SUPPORTS_CREDENTIALS', 'true')
-    #response.headers['Access-Control-Allow-Credentials'] = 'true'
-    #response.headers['CORS_SUPPORTS_CREDENTIALS'] = 'true'
+    # response.headers['Access-Control-Allow-Credentials'] = 'true'
+    # response.headers['CORS_SUPPORTS_CREDENTIALS'] = 'true'
     return response
 
 
@@ -60,6 +62,7 @@ def user_check(protected_function):
             return jsonify({'status': 401, 'error': 'no-session-found'})
 
         return protected_function(*args, **kwargs)
+
     return wrapper
 
 
@@ -131,7 +134,7 @@ def check_login():
     if user_session != '':
         profile_query = db.get_profile_by_email(user_session)
         if profile_query['found']:
-            return jsonify({"status": 200,  "profile": profile_query['profile']}), 200
+            return jsonify({"status": 200, "profile": profile_query['profile']}), 200
 
     return jsonify({'status': 401, 'error': 'no-session-found'}), 200
 
@@ -139,9 +142,7 @@ def check_login():
 @app.route('/logout', methods=['POST'])
 def logout():
     print(session, file=sys.stdout)
-    print(session.pop('email', None), file=sys.stdout)
-    session['email'] = ''
-
+    session.pop('email', None)
     return jsonify({'status': 200}), 200
 
 
@@ -204,18 +205,18 @@ def get_group_by_user():
     if user_email is None:
         return jsonify({'status': 400})
     else:
-        return jsonify({
-            'groups': [
-                {
-                    'group-name': 'Testing Group',
-                    'group-uuid': 'ba36f7ca-e8d2-42f9-9b65-ec9dc9fc51f2'
-                 },
-                {
-                    'group-name': 'Testing Group 2',
-                    'group-uuid': '2194d399-b955-49d3-a242-4eebbc4f8d23'
-                }
-            ]
-        })
+        return jsonify({'status': 200,
+                        'groups': [
+                            {
+                                'group-name': 'Testing Group',
+                                'group-uuid': 'ba36f7ca-e8d2-42f9-9b65-ec9dc9fc51f2'
+                            },
+                            {
+                                'group-name': 'Testing Group 2',
+                                'group-uuid': '2194d399-b955-49d3-a242-4eebbc4f8d23'
+                            }
+                        ]
+                        })
 
 
 if __name__ == '__main__':
