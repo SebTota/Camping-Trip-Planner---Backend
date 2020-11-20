@@ -21,11 +21,11 @@ cors = CORS(app)
 
 @app.after_request
 def add_header(response):
-    response.headers.add("Access-Control-Allow-Origin", "http://localhost:63342")
+    response.headers.add("Access-Control-Allow-Origin", "https://camping.sebtota.com")
     response.headers.add("Access-Control-Allow-Credentials", "true")
-    response.headers.add('Access-Control-Request-Headers', 'access-control-allow-credentials, access-control-allow-origin')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('CORS_SUPPORTS_CREDENTIALS', 'true')
+    # response.headers.add('Access-Control-Request-Headers', 'access-control-allow-credentials, access-control-allow-origin')
+    # response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    # response.headers.add('CORS_SUPPORTS_CREDENTIALS', 'true')
     # response.headers['Access-Control-Allow-Credentials'] = 'true'
     # response.headers['CORS_SUPPORTS_CREDENTIALS'] = 'true'
     return response
