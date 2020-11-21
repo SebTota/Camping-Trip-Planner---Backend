@@ -110,8 +110,8 @@ def get_profile_by_email(email) -> dict:
         return {"found": False, "profile": ""}
     else:
         return {"found": True, "profile": {
-            "first_name": res[0][0],
-            "last_name": res[0][1],
+            "first_name": res[0][0].strip().title(),
+            "last_name": res[0][1].strip().title(),
             "full_name": res[0][0].strip().title() + " " + res[0][1].strip().title(),
             "user_name": res[0][2]
         }}

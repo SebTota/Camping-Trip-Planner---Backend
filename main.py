@@ -1,21 +1,14 @@
 from flask import Flask, jsonify, request, session, redirect
 from functools import wraps
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 import os
 import sys
-from flask_session import Session
-import uuid
-import time
 
 from src import auth
 from src import db
 
-# name = request.headers["name"]  # localhost:5000/login headers= {'name': 'someones name}
-# name = request.args["name"]  # localhost:5000/login?name=sebastian
-
 app = Flask(__name__)
 app.secret_key = os.getenv('SESSION_SECRET')
-# app.config.from_object(__name__)
 cors = CORS(app)
 
 
@@ -23,11 +16,6 @@ cors = CORS(app)
 def add_header(response):
     response.headers.add("Access-Control-Allow-Origin", "https://camping.sebtota.com")
     response.headers.add("Access-Control-Allow-Credentials", "true")
-    # response.headers.add('Access-Control-Request-Headers', 'access-control-allow-credentials, access-control-allow-origin')
-    # response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    # response.headers.add('CORS_SUPPORTS_CREDENTIALS', 'true')
-    # response.headers['Access-Control-Allow-Credentials'] = 'true'
-    # response.headers['CORS_SUPPORTS_CREDENTIALS'] = 'true'
     return response
 
 
@@ -59,7 +47,7 @@ def user_check(protected_function):
         user_session = session.get('email', None)
 
         if user_session is None:
-            return jsonify({'status': 401, 'error': 'no-session-found'})
+            return redirect('login.html')
 
         return protected_function(*args, **kwargs)
 
@@ -89,7 +77,15 @@ def login():
         username_query = db.get_username_by_email(email)
         if username_query['found']:
             session['email'] = email
-            return jsonify({'status': 200, 'email': email}), 200
+
+            profile_query = db.get_profile_by_email(email)
+            resp = jsonify({'status': 200, 'email': email})
+            resp.set_cookie('active', 'true')
+
+            for k, v in profile_query['profile'].items():
+                resp.set_cookie(k, v)
+
+            return resp
         else:
             return jsonify({'status': 404, 'error': 'user-email-not-found'}), 404
     else:
@@ -122,21 +118,6 @@ def signup():
 @app.route('/forgotPassword', methods=['POST'])
 def forgot_password():
     return ""
-
-
-@app.route('/checkLogin', methods=['GET'])
-def check_login():
-    if 'email' not in session:
-        return jsonify({'status': 401, 'error': 'no-session-found'}), 200
-
-    user_session = session.get('email', '')
-
-    if user_session != '':
-        profile_query = db.get_profile_by_email(user_session)
-        if profile_query['found']:
-            return jsonify({"status": 200, "profile": profile_query['profile']}), 200
-
-    return jsonify({'status': 401, 'error': 'no-session-found'}), 200
 
 
 @app.route('/logout', methods=['POST'])
