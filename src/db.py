@@ -258,15 +258,24 @@ def get_items_in_list(list_id):
 def get_lists_in_group(group_id):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    query = "SELECT _id FROM Tbl_Lists " \
+    query = "SELECT _id, Lists_Name FROM Tbl_Lists " \
             "WHERE Group_id = %s"
     cursor.execute(query, (group_id,))
-    retVal = cursor.fetchall()
+    res = cursor.fetchall()
     my_db.commit()
     cursor.close()
     my_db.close()
-    return [id[0] for id in retVal]
 
+    if len(res) == 0:
+        return []
+    else:
+        d1 = list(dict())
+        for i in range(len(res)):
+            d1.append({
+                "list-name": res[i][0],
+                'list-id': res[i][1],
+            })
+        return d1
 
 def add_item_to_list(list_id, name, quantity=1, user_id=0, unit_cost=0):
     my_db = cnxpool.get_connection()
@@ -331,23 +340,4 @@ def unclaim_item(item_id):
 
 
 if __name__ == '__main__':
-    if(False):
-        id = create_list("test", 0)
-        print(id)
-        print("test")
-        print("test4")
-        add_item_to_list(id, "test")
-
-        claim_item(4, 3)
-        unclaim_item(4)
-        change_cost_of_item(4, 5)
-        print(get_lists_in_group(1))
-
-        add_item_to_list(11, "additional item")
-        print(get_items_in_list(11))
-        delete_list_by_id(11)
-
-        print(get_list_by_id(10))
-    add_group_request('seb1@gmail.com', 'tui43030@temple.edu', '2194d399-b955-49d3-a242-4eebbc4f8d23')
-    add_group_request('seb1tota@gmail.com', 'tui43030@temple.edu', 'ba36f7ca-e8d2-42f9-9b65-ec9dc9fc51f2')
-    #print(get_group_requests('tui43030@temple.edu'))
+    accept_group_invite_request('tui43030@temple.edu', 'd34df504-b123-490e-a2ef-c956a4384f3d')
