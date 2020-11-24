@@ -371,5 +371,24 @@ def delete_user_from_group(user_id):
     my_db.close()
 
 
+def get_group_by_user(user_id):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+
+    cmd = "SELECT Group_Id FROM Tbl_Group_Users WHERE User_Id = %s"
+
+    vls = (user_id,)
+    cursor.execute(cmd, vls)
+
+    res = cursor.fetchall()
+    cursor.close()
+    my_db.close()
+
+    if len(res) == 0:
+        return {"found": False, "group_id": "user doesn't belong to a group"}
+    else:
+        return {"found": True, "group_id": res[0][0]}
+
+
 if __name__ == '__main__':
     accept_group_invite_request('tui43030@temple.edu', 'd34df504-b123-490e-a2ef-c956a4384f3d')
