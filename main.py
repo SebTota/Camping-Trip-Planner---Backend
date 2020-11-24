@@ -200,8 +200,8 @@ def get_group_by_user():
                         })
 
 
-@app.route('/getGroupLists', methods=['GET'])
-def get_group_by_user():
+@app.route('/getListsByGroup', methods=['GET'])
+def get_lists_by_group():
     data = request.get_json(force=True)
 
     if 'group-uuid' in data:

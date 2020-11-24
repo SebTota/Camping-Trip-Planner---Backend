@@ -340,4 +340,4 @@ def unclaim_item(item_id):
 
 
 if __name__ == '__main__':
-    print(get_lists_in_group(1))
+    accept_group_invite_request('tui43030@temple.edu', 'd34df504-b123-490e-a2ef-c956a4384f3d')
