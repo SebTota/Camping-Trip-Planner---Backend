@@ -339,5 +339,23 @@ def unclaim_item(item_id):
     my_db.close()
 
 
+def get_user_id_by_username(user_name):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    cmd = "SELECT _id FROM Tbl_Users WHERE Users_Username = %s"
+
+    vls = (user_name,)
+    cursor.execute(cmd, vls)
+
+    res = cursor.fetchall()
+    cursor.close()
+    my_db.close()
+
+    if len(res) == 0:
+        return {"found": False, "user_id": "does not exist"}
+    else:
+        return {"found": True, "user_id": res[0][0]}
+
+
 if __name__ == '__main__':
     accept_group_invite_request('tui43030@temple.edu', 'd34df504-b123-490e-a2ef-c956a4384f3d')
