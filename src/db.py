@@ -357,5 +357,19 @@ def get_user_id_by_username(user_name):
         return {"found": True, "user_id": res[0][0]}
 
 
+def delete_user_from_group(user_id):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+
+    cmd = "DELETE FROM Tbl_Group_Users WHERE User_Id= %s"
+
+    vls = (user_id,)
+    cursor.execute(cmd, vls)
+
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
 if __name__ == '__main__':
     accept_group_invite_request('tui43030@temple.edu', 'd34df504-b123-490e-a2ef-c956a4384f3d')
