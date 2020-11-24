@@ -136,26 +136,23 @@ def get_user_id_by_username(user_name):
         return {"found": True, "user_id": res[0][0]}
 
 
-def delete_user_from_group(user_name):
+def delete_user_from_group(user_id):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
 
-    user_id = get_user_id_by_username(user_name)
-
-    cmd = "DELETE FROM Tbl_Group_Users WHERE User_Id= (%s)"
+    cmd = "DELETE FROM Tbl_Group_Users WHERE User_Id= %s"
 
     vls = (user_id,)
-    cursor.execute(cmd, str(vls))
+    cursor.execute(cmd, vls)
 
+    my_db.commit()
     cursor.close()
     my_db.close()
 
 
-def get_group_by_user(user_name):
+def get_group_by_user(user_id):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-
-    user_id = get_user_id_by_username(user_name)
 
     cmd = "SELECT Group_Id FROM Tbl_Group_Users WHERE User_Id = %s"
 
@@ -169,13 +166,10 @@ def get_group_by_user(user_name):
     if len(res) == 0:
         return {"found": False, "group_id": "user doesn't belong to a group"}
     else:
-        return {"found": True, "user_id": res[0][0]}
-
-
-# def get_list_by_group_id(group_id):
+        return {"found": True, "group_id": res[0][0]}
 
 
 if __name__ == '__main__':
-    email = "tui43030@temple.edu"
-    print(get_group_by_user(email))
+    user_id = "11"
+    print(delete_user_from_group(user_id))
 
