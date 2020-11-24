@@ -202,11 +202,11 @@ def get_group_by_user():
 
 @app.route('/getListsByGroup', methods=['GET'])
 def get_lists_by_group():
-    data = request.get_json(force=True)
+    group_uuid = request.args.get("group-uuid")
 
-    if 'group-uuid' in data:
+    if group_uuid:
         return jsonify({'status': 200,
-                        'lists': db.get_lists_in_group('group-uuid')})
+                        'lists': db.get_lists_in_group(group_uuid)})
     else:
         return jsonify({'status': 400})
 
@@ -215,7 +215,9 @@ if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')
 
-    if cert is None or key is None:
-        app.run(debug=True, host='0.0.0.0')
-    else:
-        app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
+    app.run()
+
+    # if cert is None or key is None:
+    #     app.run(debug=True, host='0.0.0.0')
+    # else:
+    #     app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
