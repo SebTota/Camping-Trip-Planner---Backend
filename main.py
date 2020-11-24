@@ -200,6 +200,17 @@ def get_group_by_user():
                         })
 
 
+@app.route('/getGroupLists', methods=['GET'])
+def get_group_by_user():
+    data = request.get_json(force=True)
+
+    if 'group-uuid' in data:
+        return jsonify({'status': 200,
+                        'lists': db.get_lists_in_group('group-uuid')})
+    else:
+        return jsonify({'status': 400})
+
+
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')

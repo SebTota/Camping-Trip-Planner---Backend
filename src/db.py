@@ -261,12 +261,21 @@ def get_lists_in_group(group_id):
     query = "SELECT _id, Lists_Name FROM Tbl_Lists " \
             "WHERE Group_id = %s"
     cursor.execute(query, (group_id,))
-    retVal = cursor.fetchall()
+    res = cursor.fetchall()
     my_db.commit()
     cursor.close()
     my_db.close()
-    return retVal
 
+    if len(res) == 0:
+        return []
+    else:
+        d1 = list(dict())
+        for i in range(len(res)):
+            d1.append({
+                "list-name": res[i][0],
+                'list-id': res[i][1],
+            })
+        return d1
 
 def add_item_to_list(list_id, name, quantity=1, user_id=0, unit_cost=0):
     my_db = cnxpool.get_connection()
