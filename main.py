@@ -226,6 +226,18 @@ def create_list():
         return jsonify({'status': 400})
 
 
+@app.route('/deleteList', methods=['POST'])
+def delete_list():
+    data = request.get_json(force=True)
+    list_id = data.get("list-id")
+
+    if list_id:
+        db.delete_list_by_id(list_id)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')
