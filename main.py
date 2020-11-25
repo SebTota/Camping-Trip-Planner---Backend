@@ -214,6 +214,16 @@ def rename_group():
         return jsonify({'status': 400})
 
 
+@app.route('/createList', methods=['POST'])
+def create_list():
+    data = request.get_json(force=True)
+    group_id = data.get("group-id")
+
+    if group_id:
+        db.create_list(data["name"], group_id)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
 
 
 if __name__ == '__main__':

@@ -290,6 +290,7 @@ def get_lists_in_group(group_id):
             })
         return d1
 
+
 def add_item_to_list(list_id, name, quantity=1, user_id=0, unit_cost=0):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
