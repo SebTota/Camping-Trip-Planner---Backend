@@ -199,6 +199,18 @@ def accept_group_invite_request(email, request_uuid):
     remove_group_invite_request(request_uuid)
 
 
+def rename_group(new_name, group_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    cmd = "UPDATE Tbl_Groups " \
+          "SET Group_Name = %s " \
+          "WHERE Groups_Uuid = %s"
+    cursor.execute(cmd, (new_name, group_uuid))
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
 def create_list(name, group_id):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
@@ -404,4 +416,4 @@ def get_group_by_user(email):
 
 
 if __name__ == '__main__':
-    accept_group_invite_request('tui43030@temple.edu', 'd34df504-b123-490e-a2ef-c956a4384f3d')
+    rename_group('taco bell', '2194d399-b955-49d3-a242-4eebbc4f8d23')
