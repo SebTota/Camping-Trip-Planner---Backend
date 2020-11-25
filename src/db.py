@@ -372,23 +372,35 @@ def delete_user_from_group(user_id):
     my_db.close()
 
 
-def get_group_by_user(user_id):
+def get_group_by_user(email):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
 
-    cmd = "SELECT Group_Id FROM Tbl_Group_Users WHERE User_Id = %s"
+    cmd = "SELECT Group_Name, Groups_Uuid FROM Tbl_Groups " \
+          "INNER JOIN Tbl_Group_Users " \
+          "ON Tbl_Group_Users.Group_Id = Tbl_Groups._id " \
+          "INNER JOIN Tbl_Users " \
+          "ON Tbl_Group_Users.User_Id = Tbl_Users._id " \
+          "WHERE Users_Email = %s"
 
-    vls = (user_id,)
+    vls = (email, )
     cursor.execute(cmd, vls)
 
     res = cursor.fetchall()
+
     cursor.close()
     my_db.close()
 
     if len(res) == 0:
-        return {"found": False, "group_id": "user doesn't belong to a group"}
+        return []
     else:
-        return {"found": True, "group_id": res[0][0]}
+        ret_list = list(dict())
+        for i in range(len(res)):
+            ret_list.append({
+                "group-name": res[i][0],
+                'group-uuid': res[i][1],
+            })
+        return ret_list
 
 
 if __name__ == '__main__':
