@@ -3,18 +3,20 @@ from functools import wraps
 from flask_cors import CORS
 import os
 import sys
+import datetime
 
 from src import auth
 from src import db
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SESSION_SECRET')
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=1)
 cors = CORS(app)
 
 
 @app.after_request
 def add_header(response):
-    response.headers.add("Access-Control-Allow-Origin", "https://camping.sebtota.com")
+    response.headers.add("Access-Control-Allow-Origin", "http://localhost:8080")
     response.headers.add("Access-Control-Allow-Credentials", "true")
     return response
 
@@ -73,6 +75,9 @@ def login():
 
     # Authenticate users account and password
     if auth.verify_password(email, password):
+        # Set expiration date on sign in cookie
+        session.permanent = True
+        expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
         # Password is correct, return temporary session ID
         username_query = db.get_username_by_email(email)
         if username_query['found']:
@@ -80,10 +85,10 @@ def login():
 
             profile_query = db.get_profile_by_email(email)
             resp = jsonify({'status': 200, 'email': email})
-            resp.set_cookie('active', 'true')
+            resp.set_cookie('active', 'true', expires=expire_date)
 
             for k, v in profile_query['profile'].items():
-                resp.set_cookie(k, v)
+                resp.set_cookie(k, v, expires=expire_date)
 
             return resp
         else:
@@ -123,8 +128,10 @@ def forgot_password():
 @app.route('/logout', methods=['POST'])
 def logout():
     print(session, file=sys.stdout)
+    resp = jsonify({'status': 200})
     session.pop('email', None)
-    return jsonify({'status': 200}), 200
+    resp.set_cookie('active', 'false')
+    return resp
 
 
 @app.route('/inviteUser', methods=['POST'])
@@ -143,6 +150,7 @@ def invite_user():
 
 
 @app.route('/getGroupInvites', methods=['GET'])
+@user_check
 def get_group_invites():
     user_email = session.get('email', None)
     if user_email is None:
@@ -152,6 +160,7 @@ def get_group_invites():
 
 
 @app.route('/acceptGroupInvite', methods=['POST'])
+@user_check
 def accept_group_invite():
     data = request.get_json(force=True)
 
@@ -168,6 +177,7 @@ def accept_group_invite():
 
 
 @app.route('/declineGroupInvite', methods=['POST'])
+@user_check
 def decline_group_invite():
     data = request.get_json(force=True)
 
@@ -180,24 +190,20 @@ def decline_group_invite():
 
 
 @app.route('/getGroupsByUser', methods=['GET'])
+@user_check
 def get_group_by_user():
-    user_email = session.get('email', None)
-
-    if user_email is None:
-        return jsonify({'status': 400})
-    else:
-        return jsonify({'status': 200,
-                        'groups': [
-                            {
-                                'group-name': 'Testing Group',
-                                'group-uuid': 'ba36f7ca-e8d2-42f9-9b65-ec9dc9fc51f2'
-                            },
-                            {
-                                'group-name': 'Testing Group 2',
-                                'group-uuid': '2194d399-b955-49d3-a242-4eebbc4f8d23'
-                            }
-                        ]
-                        })
+    return jsonify({'status': 200,
+                    'groups': [
+                        {
+                            'group-name': 'Testing Group',
+                            'group-uuid': 'ba36f7ca-e8d2-42f9-9b65-ec9dc9fc51f2'
+                        },
+                        {
+                            'group-name': 'Testing Group 2',
+                            'group-uuid': '2194d399-b955-49d3-a242-4eebbc4f8d23'
+                        }
+                    ]
+                    })
 
 
 if __name__ == '__main__':
