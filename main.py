@@ -229,10 +229,10 @@ def create_list():
 @app.route('/deleteList', methods=['POST'])
 def delete_list():
     data = request.get_json(force=True)
-    list_id = data.get("list-id")
+    list_uuid = data.get("list-uuid")
 
-    if list_id:
-        db.delete_list_by_id(list_id)
+    if list_uuid:
+        db.delete_list_by_id(list_uuid)
         return jsonify({'status': 200})
     else:
         return jsonify({'status': 400})
