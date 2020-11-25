@@ -253,6 +253,19 @@ def delete_list_by_id(list_id):
     my_db.close()
 
 
+def rename_list(new_name, list_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    cmd = "UPDATE Tbl_Lists " \
+          "SET Lists_Name = %s " \
+          "WHERE Lists_Uuid = %s"
+    cursor.execute(cmd, (new_name, list_uuid))
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
+
 def get_items_in_list(list_id):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
@@ -417,4 +430,4 @@ def get_group_by_user(email):
 
 
 if __name__ == '__main__':
-    rename_group('taco bell', '2194d399-b955-49d3-a242-4eebbc4f8d23')
+    rename_list('my list', 'd0a9ef3d-ffee-44b0-b88f-7c88daa48203')

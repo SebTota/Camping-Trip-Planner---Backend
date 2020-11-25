@@ -238,6 +238,18 @@ def delete_list():
         return jsonify({'status': 400})
 
 
+@app.route('/renameList', methods=['POST'])
+def rename_list():
+    data = request.get_json(force=True)
+    list_uuid = data.get("list-uuid")
+
+    if list_uuid:
+        db.rename_list(data["new-name"], list_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')
