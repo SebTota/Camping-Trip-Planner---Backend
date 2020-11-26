@@ -202,6 +202,54 @@ def get_lists_by_group():
         return jsonify({'status': 400})
 
 
+@app.route('/renameGroup', methods=['POST'])
+def rename_group():
+    data = request.get_json(force=True)
+    group_uuid = data.get("group-uuid")
+
+    if group_uuid:
+        db.rename_group(data["new-name"], group_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/createList', methods=['POST'])
+def create_list():
+    data = request.get_json(force=True)
+    group_id = data.get("group-id")
+
+    if group_id:
+        db.create_list(data["name"], group_id)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/deleteList', methods=['POST'])
+def delete_list():
+    data = request.get_json(force=True)
+    list_uuid = data.get("list-uuid")
+
+    if list_uuid:
+        db.delete_list_by_id(list_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/renameList', methods=['POST'])
+def rename_list():
+    data = request.get_json(force=True)
+    list_uuid = data.get("list-uuid")
+
+    if list_uuid:
+        db.rename_list(data["new-name"], list_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')
