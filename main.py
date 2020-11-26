@@ -14,7 +14,7 @@ cors = CORS(app)
 
 @app.after_request
 def add_header(response):
-    response.headers.add("Access-Control-Allow-Origin", "https://camping.sebtota.com")
+    response.headers.add("Access-Control-Allow-Origin", "http://localhost:8080")
     response.headers.add("Access-Control-Allow-Credentials", "true")
     return response
 
@@ -123,8 +123,12 @@ def forgot_password():
 @app.route('/logout', methods=['POST'])
 def logout():
     print(session, file=sys.stdout)
-    session.pop('email', None)
-    return jsonify({'status': 200}), 200
+    session.clear()
+
+    resp = jsonify({'status': 200})
+    resp.set_cookie('active', 'false')
+
+    return resp
 
 
 @app.route('/inviteUser', methods=['POST'])
