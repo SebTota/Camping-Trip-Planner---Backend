@@ -202,6 +202,18 @@ def get_lists_by_group():
         return jsonify({'status': 400})
 
 
+@app.route('/deleteSelfFromGroup', methods=['POST'])
+def delete_self_from_group():
+    group_uuid = request.args.get("group-uuid")
+    user_email = session.get('email', None)
+
+    if group_uuid:
+        db.delete_user_from_group(user_email, group_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')

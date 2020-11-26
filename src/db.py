@@ -358,13 +358,16 @@ def get_user_id_by_username(user_name):
         return {"found": True, "user_id": res[0][0]}
 
 
-def delete_user_from_group(user_id):
+def delete_user_from_group(user_id, group_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
 
-    cmd = "DELETE FROM Tbl_Group_Users WHERE User_Id= %s"
+    cmd = "DELETE a FROM Tbl_Group_Users a " \
+          "INNER JOIN Tbl_Groups b on a.Group_Id = b._id " \
+          "INNER JOIN Tbl_Users u on a.User_Id = u._id " \
+          "WHERE Users_Email = %s AND Groups_Uuid = %s "
 
-    vls = (user_id,)
+    vls = (user_id, group_uuid,)
     cursor.execute(cmd, vls)
 
     my_db.commit()
@@ -372,7 +375,7 @@ def delete_user_from_group(user_id):
     my_db.close()
 
 
-def get_group_by_user(email):
+def get_group_uuid_by_user(email):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
 
