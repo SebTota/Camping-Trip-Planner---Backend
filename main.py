@@ -123,8 +123,12 @@ def forgot_password():
 @app.route('/logout', methods=['POST'])
 def logout():
     print(session, file=sys.stdout)
-    session.pop('email', None)
-    return jsonify({'status': 200}), 200
+    session.clear()
+
+    resp = jsonify({'status': 200})
+    resp.set_cookie('active', 'false')
+
+    return resp
 
 
 @app.route('/inviteUser', methods=['POST'])
@@ -187,7 +191,7 @@ def get_groups_by_user():
         return jsonify({'status': 400})
     else:
         return jsonify({'status': 200,
-                        'groups': db.get_group_by_user(user_email)
+                        'groups': db.get_group_uuid_by_user(user_email)
                         })
 
 
@@ -341,14 +345,13 @@ def rename_list():
         return jsonify({'status': 400})
 
 
-
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')
 
-    app.run()
+    # app.run()
 
-    # if cert is None or key is None:
-    #     app.run(debug=True, host='0.0.0.0')
-    # else:
-    #     app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
+    if cert is None or key is None:
+        app.run(debug=True, host='0.0.0.0')
+    else:
+        app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
