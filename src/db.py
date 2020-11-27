@@ -421,7 +421,7 @@ def get_group_uuid_by_user(email):
         return ret_list
 
 
-def update_item_status( element_uuid, status):
+def update_item_status(element_uuid, status):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     print(status)
