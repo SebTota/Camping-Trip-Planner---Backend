@@ -244,16 +244,27 @@ def delete_list_by_id(list_id):
 def get_items_in_list(list_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    query = "SELECT Elements_Name, Elements_Value, Elements_Quantity FROM Tbl_Elements " \
+    query = "SELECT Elements_Name, Elements_Cost, Elements_Quantity FROM Tbl_Elements " \
             "INNER JOIN Tbl_Lists TL on Tbl_Elements.List_id = TL._id " \
             "WHERE TL.Lists_Uuid = %s"
 
     cursor.execute(query, (list_uuid,))
-    retVal = cursor.fetchall()
+    res = cursor.fetchall()
 
     cursor.close()
     my_db.close()
-    return retVal
+
+    if len(res) == 0:
+        return []
+    else:
+        d1 = list(dict())
+        for i in range(len(res)):
+            d1.append({
+                "item-name": res[i][0],
+                "item-cost": res[i][1],
+                "item-quantity": res[i][2]
+            })
+        return d1
 
 
 # returns array of list_ids that are in the group
@@ -310,7 +321,7 @@ def change_cost_of_item(item_id, new_cost):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     cmd = "UPDATE Tbl_Elements " \
-          "SET Elements_Value = %s " \
+          "SET Elements_Cost = %s " \
           "WHERE _id = %s"
     cursor.execute(cmd, (new_cost, item_id))
     my_db.commit()
@@ -436,4 +447,4 @@ def update_item_status(element_uuid, status):
 
 
 if __name__ == '__main__':
-    get_items_in_list("abc1234")
+    print(get_items_in_list("abc1234"))
