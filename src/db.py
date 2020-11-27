@@ -265,7 +265,7 @@ def rename_list(new_name, list_uuid):
 def get_items_in_list(list_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    query = "SELECT List_id, Elements_Name, Elements_Cost, Elements_User_id, Elements_Quantity, Elements_Uuid, Element_Status FROM Tbl_Elements " \
+    query = "SELECT List_id, Elements_Name, Elements_Description, Elements_User_id, Elements_Quantity, Elements_Uuid, Element_Status FROM Tbl_Elements " \
             "INNER JOIN Tbl_Lists TL on Tbl_Elements.List_id = TL._id " \
             "WHERE TL.Lists_Uuid = %s"
 
@@ -317,14 +317,14 @@ def get_lists_in_group(group_id):
         return d1
 
 
-def add_item_to_list(list_id, name, element_cost, element_user_id, element_quantity):
+def add_item_to_list(list_id, name, element_description, element_user_id, element_quantity, element_cost):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     element_uuid = str(uuid.uuid4())
-    cmd = "INSERT INTO Tbl_Elements (List_id, Elements_Name, Elements_Cost, " \
-          "Elements_User_id, Elements_Quantity, Elements_Uuid, Element_status) VALUES (%s,%s,%s,%s,%s,%s,%s)"
+    cmd = "INSERT INTO Tbl_Elements (List_id, Elements_Name, Elements_Description, " \
+          "Elements_User_id, Elements_Quantity, Elements_Uuid, Element_status, Elements_Cost) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
 
-    vls = (list_id, name, element_cost, element_user_id, element_quantity, element_uuid, False)
+    vls = (list_id, name, element_description, element_user_id, element_quantity, element_uuid, False, element_cost)
     cursor.execute(cmd, vls)
     my_db.commit()
     cursor.close()
@@ -342,28 +342,41 @@ def remove_item_from_list(element_uuid):
     my_db.close()
 
 
-def change_cost_of_item(item_id, new_cost):
+def change_cost_of_item(new_cost, element_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     cmd = "UPDATE Tbl_Elements " \
           "SET Elements_Cost = %s " \
-          "WHERE _id = %s"
-    cursor.execute(cmd, (new_cost, item_id))
+          "WHERE Elements_Uuid = %s"
+    cursor.execute(cmd, (new_cost, element_uuid))
     my_db.commit()
     cursor.close()
     my_db.close()
 
 
-def change_name_of_item(item_id, new_name):
+def rename_item(new_name, element_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     cmd = "UPDATE Tbl_Elements " \
           "SET Elements_Name = %s " \
-          "WHERE _id = %s"
-    cursor.execute(cmd, (new_name, item_id))
+          "WHERE Elements_Uuid = %s"
+    cursor.execute(cmd, (new_name, element_uuid))
     my_db.commit()
     cursor.close()
     my_db.close()
+
+
+def change_item_description(new_description, element_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    cmd = "UPDATE Tbl_Elements " \
+          "SET Elements_Description = %s " \
+          "WHERE Elements_Uuid = %s"
+    cursor.execute(cmd, (new_description, element_uuid))
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
 
 
 def claim_item(element_uuid, user_email):
@@ -472,4 +485,4 @@ def update_item_status(element_uuid, status):
 
 
 if __name__ == '__main__':
-    print(get_items_in_list("abc1234"))
+    change_item_description('sack of apples','ddc21fc0-b464-4c3a-9b52-8512b410bb72')
