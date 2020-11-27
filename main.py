@@ -341,6 +341,18 @@ def change_item_description():
     else:
         return jsonify({'status': 400})
 
+
+@app.route('/getItemById', methods=['GET'])
+def get_item_by_id():
+    element_uuid = request.args.get("element-uuid")
+
+    if element_uuid:
+        return jsonify(({'status': 200,
+                         'elements': db.get_item_by_id(element_uuid)}))
+    else:
+        return jsonify(({'status': 400,
+                         'elements': 'element_uuid does not exist'}))
+
       
 @app.route('/createList', methods=['POST'])
 def create_list():

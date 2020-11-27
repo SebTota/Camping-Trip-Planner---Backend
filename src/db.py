@@ -404,6 +404,39 @@ def unclaim_item(element_uuid):
     my_db.close()
 
 
+def get_item_by_id(item_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    query = "SELECT List_id, Elements_Name, Elements_Description, Elements_User_id, " \
+            "Elements_Quantity, Element_Status, Elements_Cost" \
+            " FROM Tbl_Elements " \
+            "WHERE Elements_Uuid = %s"
+    cursor.execute(query, (item_uuid,))
+    res = cursor.fetchall()
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
+    if len(res) == 0:
+        return []
+    else:
+        ret_list = list(dict())
+        for i in range(len(res)):
+            ret_list.append({
+                "list-id": res[i][0],
+                "elements-name": res[i][1],
+                "elements-descripion": res[i][2],
+                "elements-user-id": res[i][3],
+                "elements-quantity": res[i][4],
+                "element-status": res[i][5],
+                "elements-cost": res[i][6]
+
+            })
+        return ret_list
+
+
+
 def get_user_id_by_username(user_name):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
@@ -465,7 +498,8 @@ def get_group_uuid_by_user(email):
         for i in range(len(res)):
             ret_list.append({
                 "group-name": res[i][0],
-                'group-uuid': res[i][1],
+                "group-uuid": res[i][1],
+
             })
         return ret_list
 
@@ -485,4 +519,4 @@ def update_item_status(element_uuid, status):
 
 
 if __name__ == '__main__':
-    change_item_description('sack of apples','ddc21fc0-b464-4c3a-9b52-8512b410bb72')
+    print(get_item_by_id('94bb9a99-e7fe-47c2-bf7c-60a843c72577'))
