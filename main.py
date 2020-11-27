@@ -255,6 +255,19 @@ def add_element_to_list():
                         'elements': 'required data not provided or does not exist'})
 
 
+@app.route('/claimItem', methods=['POST'])
+def claim_item():
+    element_uuid = request.args.get("element_uuid")
+    user_email = request.args.get("user_email")#session.get('email', None)
+    print(user_email)
+    if element_uuid and user_email:
+        return jsonify({'status': 200,
+                        'elements': db.claim_item(element_uuid, user_email)})
+    else:
+        return jsonify({'status': 400,
+                        'elements': 'could not claim item, could not find element_uuid'})
+
+
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')

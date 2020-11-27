@@ -330,13 +330,13 @@ def change_name_of_item(item_id, new_name):
     my_db.close()
 
 
-def claim_item(item_id, user_id):
+def claim_item(element_uuid, user_email):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    cmd = "UPDATE Tbl_Elements " \
-          "SET Elements_User_id = %s " \
-          "WHERE _id = %s"
-    cursor.execute(cmd, (user_id, item_id))
+    cmd = "UPDATE Tbl_Elements SET Elements_User_id = (SELECT _id FROM Tbl_Users WHERE Users_Email = %s) " \
+          "WHERE Elements_Uuid = %s"
+
+    cursor.execute(cmd, (user_email, element_uuid))
     my_db.commit()
     cursor.close()
     my_db.close()
