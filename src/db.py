@@ -342,13 +342,14 @@ def claim_item(element_uuid, user_email):
     my_db.close()
 
     
-def unclaim_item(item_id):
+def unclaim_item(element_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     cmd = "UPDATE Tbl_Elements " \
           "SET Elements_User_id = 0 " \
-          "WHERE _id = %s"
-    cursor.execute(cmd, (item_id,))
+          "WHERE Elements_uuid = %s"
+
+    cursor.execute(cmd, (element_uuid,))
     my_db.commit()
     cursor.close()
     my_db.close()

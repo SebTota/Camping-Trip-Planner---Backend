@@ -268,6 +268,18 @@ def claim_item():
                         'elements': 'could not claim item, could not find element_uuid'})
 
 
+@app.route('/unClaimItem', methods=['POST'])
+def unclaim_item():
+    element_uuid = request.args.get("element_uuid")
+
+    if element_uuid:
+        return jsonify({'status': 200,
+                        'elements': db.unclaim_item(element_uuid)})
+    else:
+        return jsonify({'status': 400,
+                        'elements': 'could not unclaim item, could not find element_uuid'})
+
+
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')
