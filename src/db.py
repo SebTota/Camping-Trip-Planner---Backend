@@ -3,7 +3,6 @@ import mysql.connector.pooling
 import os
 import uuid
 
-
 cnxpool = mysql.connector.pooling.MySQLConnectionPool(
     pool_name="mypool",
     pool_size=3,
@@ -115,8 +114,8 @@ def get_profile_by_email(email) -> dict:
             "full_name": res[0][0].strip().title() + " " + res[0][1].strip().title(),
             "user_name": res[0][2]
         }}
-      
-      
+
+
 def add_group_request(from_user_email, to_user_email, group_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
@@ -144,8 +143,8 @@ def add_group_request(from_user_email, to_user_email, group_uuid):
     my_db.commit()
     cursor.close()
     my_db.close()
-    
-    
+
+
 def get_group_requests(user_email):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
@@ -183,8 +182,8 @@ def remove_group_invite_request(request_uuid):
     my_db.commit()
     cursor.close()
     my_db.close()
-    
-    
+
+
 def accept_group_invite_request(email, request_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
@@ -197,6 +196,18 @@ def accept_group_invite_request(email, request_uuid):
     cursor.close()
     my_db.close()
     remove_group_invite_request(request_uuid)
+
+
+def rename_group(new_name, group_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    cmd = "UPDATE Tbl_Groups " \
+          "SET Group_Name = %s " \
+          "WHERE Groups_Uuid = %s"
+    cursor.execute(cmd, (new_name, group_uuid))
+    my_db.commit()
+    cursor.close()
+    my_db.close()
 
 
 def create_list(name, group_id):
@@ -229,13 +240,23 @@ def get_list_by_id(list_id):
     return retVal
 
 
-def delete_list_by_id(list_id):
+def delete_list_by_id(list_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    cmd1 = "DELETE FROM Tbl_Elements WHERE Elements_id = %s"
-    cmd2 = "DELETE FROM Tbl_Lists WHERE _id = %s"
-    cursor.execute(cmd1, (list_id,))
-    cursor.execute(cmd2, (list_id,))
+    cmd = "DELETE FROM Tbl_Lists WHERE Lists_Uuid = %s"
+    cursor.execute(cmd, (list_uuid,))
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
+def rename_list(new_name, list_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    cmd = "UPDATE Tbl_Lists " \
+          "SET Lists_Name = %s " \
+          "WHERE Lists_Uuid = %s"
+    cursor.execute(cmd, (new_name, list_uuid))
     my_db.commit()
     cursor.close()
     my_db.close()
@@ -328,7 +349,7 @@ def change_cost_of_item(item_id, new_cost):
     cursor.close()
     my_db.close()
 
-    
+
 def change_name_of_item(item_id, new_name):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
@@ -412,7 +433,7 @@ def get_group_uuid_by_user(email):
           "ON Tbl_Group_Users.User_Id = Tbl_Users._id " \
           "WHERE Users_Email = %s"
 
-    vls = (email, )
+    vls = (email,)
     cursor.execute(cmd, vls)
 
     res = cursor.fetchall()
