@@ -262,17 +262,30 @@ def rename_list(new_name, list_uuid):
     my_db.close()
 
 
-def get_items_in_list(list_id):
+def get_items_in_list(list_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    query = "SELECT _id, Elements_Name, Elements_Value, Elements_User_id, Elements_Quantity FROM Tbl_Elements " \
-            "WHERE Elements_id = %s"
-    cursor.execute(query, (list_id,))
-    retVal = cursor.fetchall()
-    my_db.commit()
+    query = "SELECT Elements_Name, Elements_Cost, Elements_Quantity FROM Tbl_Elements " \
+            "INNER JOIN Tbl_Lists TL on Tbl_Elements.List_id = TL._id " \
+            "WHERE TL.Lists_Uuid = %s"
+
+    cursor.execute(query, (list_uuid,))
+    res = cursor.fetchall()
+
     cursor.close()
     my_db.close()
-    return retVal
+
+    if len(res) == 0:
+        return []
+    else:
+        d1 = list(dict())
+        for i in range(len(res)):
+            d1.append({
+                "item-name": res[i][0],
+                "item-cost": res[i][1],
+                "item-quantity": res[i][2]
+            })
+        return d1
 
 
 # returns array of list_ids that are in the group
@@ -282,9 +295,9 @@ def get_lists_in_group(group_id):
     query = "SELECT Lists_Uuid, Lists_Name FROM Tbl_Lists " \
             "INNER JOIN Tbl_Groups ON Tbl_Lists.Group_id = Tbl_Groups._id " \
             "WHERE Tbl_Groups.Groups_Uuid = %s"
+
     cursor.execute(query, (group_id,))
     res = cursor.fetchall()
-    my_db.commit()
     cursor.close()
     my_db.close()
 
@@ -300,15 +313,26 @@ def get_lists_in_group(group_id):
         return d1
 
 
-def add_item_to_list(list_id, name, quantity=1, user_id=0, unit_cost=0):
+def add_item_to_list(list_id, name, element_cost, element_user_id, element_quantity):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    item_uuid = str(uuid.uuid4())
-    cmd = "INSERT INTO Tbl_Elements (Elements_id, Elements_Name, Elements_Value, " \
-          "Elements_User_id, Elements_Quantity, Elements_Uuid) VALUES (%s,%s,%s,%s,%s,%s)"
+    element_uuid = str(uuid.uuid4())
+    cmd = "INSERT INTO Tbl_Elements (List_id, Elements_Name, Elements_Cost, " \
+          "Elements_User_id, Elements_Quantity, Elements_Uuid, Element_status) VALUES (%s,%s,%s,%s,%s,%s,%s)"
 
-    vls = (list_id, name, unit_cost, user_id, quantity, item_uuid)
+    vls = (list_id, name, element_cost, element_user_id, element_quantity, element_uuid, False)
     cursor.execute(cmd, vls)
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
+def remove_item_from_list(element_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    query = "DELETE FROM Tbl_Elements WHERE Elements_Uuid = %s"
+
+    cursor.execute(query, (element_uuid,))
     my_db.commit()
     cursor.close()
     my_db.close()
@@ -318,7 +342,7 @@ def change_cost_of_item(item_id, new_cost):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     cmd = "UPDATE Tbl_Elements " \
-          "SET Elements_Value = %s " \
+          "SET Elements_Cost = %s " \
           "WHERE _id = %s"
     cursor.execute(cmd, (new_cost, item_id))
     my_db.commit()
@@ -338,25 +362,26 @@ def change_name_of_item(item_id, new_name):
     my_db.close()
 
 
-def claim_item(item_id, user_id):
+def claim_item(element_uuid, user_email):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    cmd = "UPDATE Tbl_Elements " \
-          "SET Elements_User_id = %s " \
-          "WHERE _id = %s"
-    cursor.execute(cmd, (user_id, item_id))
+    cmd = "UPDATE Tbl_Elements SET Elements_User_id = (SELECT _id FROM Tbl_Users WHERE Users_Email = %s) " \
+          "WHERE Elements_Uuid = %s"
+
+    cursor.execute(cmd, (user_email, element_uuid))
     my_db.commit()
     cursor.close()
     my_db.close()
 
-
-def unclaim_item(item_id):
+    
+def unclaim_item(element_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     cmd = "UPDATE Tbl_Elements " \
           "SET Elements_User_id = 0 " \
-          "WHERE _id = %s"
-    cursor.execute(cmd, (item_id,))
+          "WHERE Elements_uuid = %s"
+
+    cursor.execute(cmd, (element_uuid,))
     my_db.commit()
     cursor.close()
     my_db.close()
@@ -380,13 +405,16 @@ def get_user_id_by_username(user_name):
         return {"found": True, "user_id": res[0][0]}
 
 
-def delete_user_from_group(user_id):
+def delete_user_from_group(user_id, group_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
 
-    cmd = "DELETE FROM Tbl_Group_Users WHERE User_Id= %s"
+    cmd = "DELETE a FROM Tbl_Group_Users a " \
+          "INNER JOIN Tbl_Groups b on a.Group_Id = b._id " \
+          "INNER JOIN Tbl_Users u on a.User_Id = u._id " \
+          "WHERE Users_Email = %s AND Groups_Uuid = %s"
 
-    vls = (user_id,)
+    vls = (user_id, group_uuid,)
     cursor.execute(cmd, vls)
 
     my_db.commit()
@@ -394,7 +422,7 @@ def delete_user_from_group(user_id):
     my_db.close()
 
 
-def get_group_by_user(email):
+def get_group_uuid_by_user(email):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
 
@@ -425,5 +453,19 @@ def get_group_by_user(email):
         return ret_list
 
 
+def update_item_status(element_uuid, status):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    print(status)
+    cmd = "UPDATE Tbl_Elements " \
+          "SET Element_Status = %s " \
+          "WHERE Elements_uuid = %s"
+
+    cursor.execute(cmd, (status, element_uuid,))
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
 if __name__ == '__main__':
-    delete_list_by_id("d0a9ef3d-ffee-44b0-b88f-7c88daa48203")
+    print(get_items_in_list("abc1234"))
