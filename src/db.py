@@ -241,14 +241,16 @@ def delete_list_by_id(list_id):
     my_db.close()
 
 
-def get_items_in_list(list_id):
+def get_items_in_list(list_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    query = "SELECT _id, Elements_Name, Elements_Value, Elements_User_id, Elements_Quantity FROM Tbl_Elements " \
-            "WHERE Elements_id = %s"
-    cursor.execute(query, (list_id,))
+    query = "SELECT Elements_Name, Elements_Value, Elements_Quantity FROM Tbl_Elements " \
+            "INNER JOIN Tbl_Lists TL on Tbl_Elements.List_id = TL._id " \
+            "WHERE TL.Lists_Uuid = %s"
+
+    cursor.execute(query, (list_uuid,))
     retVal = cursor.fetchall()
-    my_db.commit()
+
     cursor.close()
     my_db.close()
     return retVal
@@ -261,9 +263,9 @@ def get_lists_in_group(group_id):
     query = "SELECT Lists_Uuid, Lists_Name FROM Tbl_Lists " \
             "INNER JOIN Tbl_Groups ON Tbl_Lists.Group_id = Tbl_Groups._id " \
             "WHERE Tbl_Groups.Groups_Uuid = %s"
+
     cursor.execute(query, (group_id,))
     res = cursor.fetchall()
-    my_db.commit()
     cursor.close()
     my_db.close()
 
@@ -278,15 +280,27 @@ def get_lists_in_group(group_id):
             })
         return d1
 
-def add_item_to_list(list_id, name, quantity=1, user_id=0, unit_cost=0):
+
+def add_item_to_list(list_id, name, element_cost, element_user_id, element_quantity):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    item_uuid = str(uuid.uuid4())
-    cmd = "INSERT INTO Tbl_Elements (Elements_id, Elements_Name, Elements_Value, " \
+    element_uuid = str(uuid.uuid4())
+    cmd = "INSERT INTO Tbl_Elements (List_id, Elements_Name, Elements_Cost, " \
           "Elements_User_id, Elements_Quantity, Elements_Uuid) VALUES (%s,%s,%s,%s,%s,%s)"
 
-    vls = (list_id, name, unit_cost, user_id, quantity, item_uuid)
+    vls = (list_id, name, element_cost, element_user_id, element_quantity, element_uuid)
     cursor.execute(cmd, vls)
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
+def remove_item_from_list(element_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    query = "DELETE FROM Tbl_Elements WHERE Elements_Uuid = %s"
+
+    cursor.execute(query, (element_uuid,))
     my_db.commit()
     cursor.close()
     my_db.close()
@@ -365,7 +379,7 @@ def delete_user_from_group(user_id, group_uuid):
     cmd = "DELETE a FROM Tbl_Group_Users a " \
           "INNER JOIN Tbl_Groups b on a.Group_Id = b._id " \
           "INNER JOIN Tbl_Users u on a.User_Id = u._id " \
-          "WHERE Users_Email = %s AND Groups_Uuid = %s "
+          "WHERE Users_Email = %s AND Groups_Uuid = %s"
 
     vls = (user_id, group_uuid,)
     cursor.execute(cmd, vls)
@@ -407,4 +421,4 @@ def get_group_uuid_by_user(email):
 
 
 if __name__ == '__main__':
-    accept_group_invite_request('tui43030@temple.edu', 'd34df504-b123-490e-a2ef-c956a4384f3d')
+    get_items_in_list("abc1234")

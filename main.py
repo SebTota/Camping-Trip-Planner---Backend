@@ -214,6 +214,47 @@ def delete_self_from_group():
         return jsonify({'status': 400})
 
 
+@app.route('/getElementsByList', methods=['GET'])
+def get_elements_by_list():
+    list_uuid = request.args.get("list_uuid")
+
+    if list_uuid:
+        return jsonify(({'status': 200,
+                         'elements': db.get_items_in_list(list_uuid)}))
+    else:
+        return jsonify(({'status': 400,
+                         'elements': 'list_uuid does not exist'}))
+
+
+@app.route('/deleteElementFromList', methods=['POST'])
+def delete_element_from_list():
+    element_uuid = request.args.get("element_uuid")
+
+    if element_uuid:
+        return jsonify(({'status': 200,
+                         'elements': db.remove_item_from_list(element_uuid)}))
+    else:
+        return jsonify(({'status': 400,
+                         'elements': 'elements_uuid does not exist'}))
+
+
+@app.route('/addElementToList', methods=['POST'])
+def add_element_to_list():
+    data = request.get_json(force=True)
+    list_id = data['list_id']
+    element_name = data['element_name']
+    element_cost = data['element_cost']
+    element_user_id = data['element_user_id']
+    element_quantity = data['element_quantity']
+
+    if list_id and element_name and element_cost and element_user_id and element_quantity:
+        return jsonify({'status': 200,
+                        'elements': db.add_item_to_list(list_id, element_name, element_cost, element_user_id, element_quantity)})
+    else:
+        return jsonify({'status': 400,
+                        'elements': 'required data not provided or does not exist'})
+
+
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')
