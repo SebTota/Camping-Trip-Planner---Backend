@@ -280,6 +280,19 @@ def unclaim_item():
                         'elements': 'could not unclaim item, could not find element_uuid'})
 
 
+@app.route('/updateItemStatus', methods=['POST'])
+def update_item_status():
+    element_status = request.args.get("element_status")
+    element_uuid = request.args.get("element_uuid")
+
+    if element_uuid and element_status:
+        return jsonify({'status': 200,
+                        'elements': db.update_item_status(element_uuid, element_status)})
+    else:
+        return jsonify({'status': 400,
+                        'elements': 'could not update element status'})
+
+
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')

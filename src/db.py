@@ -286,9 +286,9 @@ def add_item_to_list(list_id, name, element_cost, element_user_id, element_quant
     cursor = my_db.cursor()
     element_uuid = str(uuid.uuid4())
     cmd = "INSERT INTO Tbl_Elements (List_id, Elements_Name, Elements_Cost, " \
-          "Elements_User_id, Elements_Quantity, Elements_Uuid) VALUES (%s,%s,%s,%s,%s,%s)"
+          "Elements_User_id, Elements_Quantity, Elements_Uuid, Element_status) VALUES (%s,%s,%s,%s,%s,%s,%s)"
 
-    vls = (list_id, name, element_cost, element_user_id, element_quantity, element_uuid)
+    vls = (list_id, name, element_cost, element_user_id, element_quantity, element_uuid, False)
     cursor.execute(cmd, vls)
     my_db.commit()
     cursor.close()
@@ -419,6 +419,20 @@ def get_group_uuid_by_user(email):
                 'group-uuid': res[i][1],
             })
         return ret_list
+
+
+def update_item_status( element_uuid, status):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    print(status)
+    cmd = "UPDATE Tbl_Elements " \
+          "SET Element_Status = %s " \
+          "WHERE Elements_uuid = %s"
+
+    cursor.execute(cmd, (status, element_uuid,))
+    my_db.commit()
+    cursor.close()
+    my_db.close()
 
 
 if __name__ == '__main__':
