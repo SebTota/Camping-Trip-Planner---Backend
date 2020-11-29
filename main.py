@@ -178,7 +178,7 @@ def decline_group_invite():
         # Missing request uuid so nothing to decline
         return jsonify({'status': 400, 'error': 'missing-uuid'})
 
-
+    
 @app.route('/getGroupsByUser', methods=['GET'])
 def get_groups_by_user():
     user_email = session.get('email', None)
@@ -187,7 +187,7 @@ def get_groups_by_user():
         return jsonify({'status': 400})
     else:
         return jsonify({'status': 200,
-                        'groups': db.get_group_by_user(user_email)
+                        'groups': db.get_group_uuid_by_user(user_email)
                         })
 
 
