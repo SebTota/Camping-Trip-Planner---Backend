@@ -265,7 +265,7 @@ def rename_list(new_name, list_uuid):
 def get_items_in_list(list_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    query = "SELECT List_id, Elements_Name, Elements_Description, Elements_User_id, Elements_Quantity, Elements_Uuid, Element_Status FROM Tbl_Elements " \
+    query = "SELECT List_id, Elements_Name, Elements_Cost, Elements_User_id, Elements_Quantity, Elements_Uuid, Element_Status, Elements_Description FROM Tbl_Elements " \
             "INNER JOIN Tbl_Lists TL on Tbl_Elements.List_id = TL._id " \
             "WHERE TL.Lists_Uuid = %s"
 
@@ -287,7 +287,8 @@ def get_items_in_list(list_uuid):
                 "claimed-user-id": res[i][3],
                 "item-quantity": res[i][4],
                 "item-uuid": res[i][5],
-                "item-status": res[i][6]
+                "item-status": res[i][6],
+                "item-description": res[i][7]
             })
         return d1
 
