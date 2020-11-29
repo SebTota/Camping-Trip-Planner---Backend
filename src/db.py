@@ -297,7 +297,7 @@ def get_items_in_list(list_uuid):
 def get_lists_in_group(group_id):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    query = "SELECT Lists_Uuid, Lists_Name FROM Tbl_Lists " \
+    query = "SELECT Lists_Name, Lists_Uuid FROM Tbl_Lists " \
             "INNER JOIN Tbl_Groups ON Tbl_Lists.Group_id = Tbl_Groups._id " \
             "WHERE Tbl_Groups.Groups_Uuid = %s"
 
