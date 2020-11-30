@@ -191,20 +191,6 @@ def decline_group_invite():
 
 @app.route('/getGroupsByUser', methods=['GET'])
 @user_check
-def get_group_by_user():
-    return jsonify({'status': 200,
-                    'groups': [
-                        {
-                            'group-name': 'Testing Group',
-                            'group-uuid': 'ba36f7ca-e8d2-42f9-9b65-ec9dc9fc51f2'
-                        },
-                        {
-                            'group-name': 'Testing Group 2',
-                            'group-uuid': '2194d399-b955-49d3-a242-4eebbc4f8d23'
-                        }
-                    ]
-                    })
-
 def get_groups_by_user():
     user_email = session.get('email', None)
 
