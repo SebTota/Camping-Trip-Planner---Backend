@@ -259,11 +259,12 @@ def add_element_to_list():
     element_user_id = data['element-user-id']
     element_quantity = data['element-quantity']
     element_cost = data['element_cost']
+    element_status = data['element_status']
 
-    if list_id and element_name and element_description and element_user_id and element_quantity and element_cost:
+    if list_id and element_name and element_description and element_user_id and element_quantity and element_cost and element_status:
         return jsonify({'status': 200,
                         'elements': db.add_item_to_list(list_id, element_name, element_description, element_user_id,
-                                                        element_quantity, element_cost)})
+                                                        element_quantity, element_cost, element_status)})
     else:
         return jsonify({'status': 400,
                         'elements': 'required data not provided or does not exist'})
@@ -358,7 +359,7 @@ def get_item_by_id():
 @app.route('/createList', methods=['POST'])
 def create_list():
     data = request.get_json(force=True)
-    group_id = data.get("group-id")
+    group_id = db.get_group_id_by_uuid(data.get("group-uuid"));
 
     if group_id:
         db.create_list(data["name"], group_id)
@@ -404,7 +405,7 @@ def get_users_in_group():
 @app.route('/createGroup', methods=['POST'])
 def create_group():
     data = request.get_json(force=True)
-    group_name = data['group-name']
+    group_name = data.get('group-name')
     user_email = session.get('email', None)
 
     if group_name:

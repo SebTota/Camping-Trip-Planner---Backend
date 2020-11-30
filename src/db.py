@@ -364,7 +364,7 @@ def get_items_in_list(list_uuid):
 def get_lists_in_group(group_id):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    query = "SELECT Lists_Name, Lists_Uuid FROM Tbl_Lists " \
+    query = "SELECT Lists_Name, Lists_Uuid, Tbl_Lists._id FROM Tbl_Lists " \
             "INNER JOIN Tbl_Groups ON Tbl_Lists.Group_id = Tbl_Groups._id " \
             "WHERE Tbl_Groups.Groups_Uuid = %s"
 
@@ -380,19 +380,20 @@ def get_lists_in_group(group_id):
         for i in range(len(res)):
             d1.append({
                 "list-name": res[i][0],
-                'list-id': res[i][1],
+                'list-uuid': res[i][1],
+                'list-id': res[i][2],
             })
         return d1
 
 
-def add_item_to_list(list_id, name, element_description, element_user_id, element_quantity, element_cost):
+def add_item_to_list(list_id, name, element_description, element_user_id, element_quantity, element_cost, element_status):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     element_uuid = str(uuid.uuid4())
     cmd = "INSERT INTO Tbl_Elements (List_id, Elements_Name, Elements_Description, " \
           "Elements_User_id, Elements_Quantity, Elements_Uuid, Element_status, Elements_Cost) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
 
-    vls = (list_id, name, element_description, element_user_id, element_quantity, element_uuid, False, element_cost)
+    vls = (list_id, name, element_description, element_user_id, element_quantity, element_uuid, element_status, element_cost)
     cursor.execute(cmd, vls)
     my_db.commit()
     cursor.close()
