@@ -395,7 +395,7 @@ def rename_list():
 @app.route('/createGroup', methods=['POST'])
 def create_group():
     data = request.get_json(force=True)
-    group_name = data['group-name']
+    group_name = data.get('group-name')
     user_email = session.get('email', None)
 
     if group_name:
