@@ -205,12 +205,263 @@ def get_group_by_user():
                     ]
                     })
 
+def get_groups_by_user():
+    user_email = session.get('email', None)
+
+    if user_email is None:
+        return jsonify({'status': 400})
+    else:
+        return jsonify({'status': 200,
+                        'groups': db.get_group_uuid_by_user(user_email)
+                        })
+
+
+@app.route('/getListsByGroup', methods=['GET'])
+def get_lists_by_group():
+    group_uuid = request.args.get("group-uuid")
+
+    if group_uuid:
+        return jsonify({'status': 200,
+                        'lists': db.get_lists_in_group(group_uuid)})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/deleteSelfFromGroup', methods=['POST'])
+def delete_self_from_group():
+    group_uuid = request.args.get("group-uuid")
+    user_email = session.get('email', None)
+
+    if group_uuid:
+        db.delete_user_from_group(user_email, group_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/renameGroup', methods=['POST'])
+def rename_group():
+    data = request.get_json(force=True)
+    group_uuid = data.get("group-uuid")
+
+    if group_uuid:
+        db.rename_group(data["new-name"], group_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/getElementsByList', methods=['GET'])
+def get_elements_by_list():
+    list_uuid = request.args.get("list-uuid")
+
+    if list_uuid:
+        return jsonify(({'status': 200,
+                         'elements': db.get_items_in_list(list_uuid)}))
+    else:
+        return jsonify(({'status': 400,
+                         'elements': 'list_uuid does not exist'}))
+
+
+@app.route('/deleteElementFromList', methods=['POST'])
+def delete_element_from_list():
+    element_uuid = request.args.get("element-uuid")
+
+    if element_uuid:
+        return jsonify(({'status': 200,
+                         'elements': db.remove_item_from_list(element_uuid)}))
+    else:
+        return jsonify(({'status': 400,
+                         'elements': 'elements_uuid does not exist'}))
+
+
+@app.route('/addElementToList', methods=['POST'])
+def add_element_to_list():
+    data = request.get_json(force=True)
+    list_id = data['list-id']
+    element_name = data['element-name']
+    element_description = data['element-description']
+    element_user_id = data['element-user-id']
+    element_quantity = data['element-quantity']
+    element_cost = data['element_cost']
+    element_status = data['element_status']
+
+    if list_id and element_name and element_description and element_user_id and element_quantity and element_cost and element_status:
+        return jsonify({'status': 200,
+                        'elements': db.add_item_to_list(list_id, element_name, element_description, element_user_id,
+                                                        element_quantity, element_cost, element_status)})
+    else:
+        return jsonify({'status': 400,
+                        'elements': 'required data not provided or does not exist'})
+
+
+@app.route('/claimItem', methods=['POST'])
+def claim_item():
+    element_uuid = request.args.get("element-uuid")
+    user_email = request.args.get("user-email")  # session.get('email', None)
+    print(user_email)
+    if element_uuid and user_email:
+        return jsonify({'status': 200,
+                        'elements': db.claim_item(element_uuid, user_email)})
+    else:
+        return jsonify({'status': 400,
+                        'elements': 'could not claim item, could not find element_uuid'})
+
+
+@app.route('/unClaimItem', methods=['POST'])
+def unclaim_item():
+    element_uuid = request.args.get("element-uuid")
+
+    if element_uuid:
+        return jsonify({'status': 200,
+                        'elements': db.unclaim_item(element_uuid)})
+    else:
+        return jsonify({'status': 400,
+                        'elements': 'could not unclaim item, could not find element_uuid'})
+
+
+@app.route('/updateItemStatus', methods=['POST'])
+def update_item_status():
+    element_status = request.args.get("element-status")
+    element_uuid = request.args.get("element-uuid")
+
+    if element_uuid and element_status:
+        return jsonify({'status': 200,
+                        'elements': db.update_item_status(element_uuid, element_status)})
+    else:
+        return jsonify({'status': 400,
+                        'elements': 'could not update element status'})
+
+
+@app.route('/renameItem', methods=['POST'])
+def rename_item():
+    data = request.get_json(force=True)
+    element_uuid = data.get("element-uuid")
+
+    if element_uuid:
+        db.rename_item(data["new-name"], element_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/changeItemCost', methods=['POST'])
+def change_item_cost():
+    data = request.get_json(force=True)
+    element_uuid = data.get("element-uuid")
+
+    if element_uuid:
+        db.change_cost_of_item(data["new-cost"], element_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/changeItemDescription', methods=['POST'])
+def change_item_description():
+    data = request.get_json(force=True)
+    element_uuid = data.get("element-uuid")
+
+    if element_uuid:
+        db.change_item_description(data["new-description"], element_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/getItemById', methods=['GET'])
+def get_item_by_id():
+    element_uuid = request.args.get("element-uuid")
+
+    if element_uuid:
+        return jsonify(({'status': 200,
+                         'elements': db.get_item_by_id(element_uuid)}))
+    else:
+        return jsonify(({'status': 400,
+                         'elements': 'element_uuid does not exist'}))
+
+
+@app.route('/createList', methods=['POST'])
+def create_list():
+    data = request.get_json(force=True)
+    group_id = db.get_group_id_by_uuid(data.get("group-uuid"));
+
+    if group_id:
+        db.create_list(data["name"], group_id)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/deleteList', methods=['POST'])
+def delete_list():
+    data = request.get_json(force=True)
+    list_uuid = data.get("list-uuid")
+
+    if list_uuid:
+        db.delete_list_by_id(list_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/renameList', methods=['POST'])
+def rename_list():
+    data = request.get_json(force=True)
+    list_uuid = data.get("list-uuid")
+
+    if list_uuid:
+        db.rename_list(data["new-name"], list_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/getUsersInGroup', methods=['GET'])
+def get_users_in_group():
+    group_uuid = request.args.get("group_uuid")
+
+    print(group_uuid)
+
+    if group_uuid:
+        return jsonify({'status': 200, 'users': db.get_all_users_in_group(group_uuid)})
+    return jsonify({'status': 400})
+
+@app.route('/createGroup', methods=['POST'])
+def create_group():
+    data = request.get_json(force=True)
+    group_name = data.get('group-name')
+    user_email = session.get('email', None)
+
+    if group_name:
+        group_uuid = db.create_group(group_name)
+        db.add_user_to_group(db.get_group_id_by_uuid(group_uuid), db.get_user_id_by_email(user_email))
+
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/addUserToGroup', methods=['POST'])
+def add_user_to_group():
+    data = request.get_json(force=True)
+    user_email = session.get('email', None)
+    group_uuid = data.get("group-uuid")
+
+    if user_email and group_uuid:
+        db.add_user_to_group(db.get_group_id_by_uuid(group_uuid), db.get_user_id_by_email(user_email))
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
 
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')
 
-    if cert is None or key is None:
-        app.run(debug=True, host='0.0.0.0')
-    else:
-        app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
+    app.run()
+
+    # if cert is None or key is None:
+    #     app.run(debug=True, host='0.0.0.0')
+    # else:
+    #     app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
