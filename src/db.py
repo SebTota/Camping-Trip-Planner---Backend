@@ -5,7 +5,7 @@ import uuid
 
 cnxpool = mysql.connector.pooling.MySQLConnectionPool(
     pool_name="mypool",
-    pool_size=3,
+    pool_size=5,
     host=os.getenv("DB_HOST"),
     user=os.getenv("DB_USER"),
     password=os.getenv("DB_PASS"),
