@@ -358,7 +358,7 @@ def get_item_by_id():
 @app.route('/createList', methods=['POST'])
 def create_list():
     data = request.get_json(force=True)
-    group_id = data.get("group-id")
+    group_id = db.get_group_id_by_uuid(data.get("group-uuid"));
 
     if group_id:
         db.create_list(data["name"], group_id)
