@@ -221,6 +221,7 @@ def create_group(name):
     my_db.commit()
     cursor.close()
     my_db.close()
+    return group_uuid
 
 
 def get_group_id_by_name(name):
@@ -229,6 +230,19 @@ def get_group_id_by_name(name):
     query = "SELECT _id FROM Tbl_Groups " \
             "WHERE Group_Name = %s"
     cursor.execute(query, (name,))
+    retVal = cursor.fetchall()
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+    return retVal[0][0]
+
+
+def get_group_id_by_uuid(group_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    query = "SELECT _id FROM Tbl_Groups " \
+            "WHERE Groups_Uuid = %s"
+    cursor.execute(query, (group_uuid,))
     retVal = cursor.fetchall()
     my_db.commit()
     cursor.close()
@@ -571,4 +585,4 @@ def update_item_status(element_uuid, status):
 
 
 if __name__ == '__main__':
-    add_user_to_group(1,14)
+    print(create_group("shravanth's group"))
