@@ -14,7 +14,7 @@ cors = CORS(app)
 
 @app.after_request
 def add_header(response):
-    response.headers.add("Access-Control-Allow-Origin", "https://camping.sebtota.com")
+    response.headers.add("Access-Control-Allow-Origin", "http://localhost:8080")
     response.headers.add("Access-Control-Allow-Credentials", "true")
     return response
 
@@ -343,6 +343,17 @@ def rename_list():
         return jsonify({'status': 200})
     else:
         return jsonify({'status': 400})
+
+
+@app.route('/getUsersInGroup', methods=['GET'])
+def get_users_in_group():
+    group_uuid = request.args.get("group_uuid")
+
+    print(group_uuid)
+
+    if group_uuid:
+        return jsonify({'status': 200, 'users': db.get_all_users_in_group(group_uuid)})
+    return jsonify({'status': 400})
 
 
 if __name__ == '__main__':
