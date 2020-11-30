@@ -14,7 +14,7 @@ cors = CORS(app)
 
 @app.after_request
 def add_header(response):
-    response.headers.add("Access-Control-Allow-Origin", "http://localhost:8080")
+    response.headers.add("Access-Control-Allow-Origin", "https://camping.sebtota.com:5000")
     response.headers.add("Access-Control-Allow-Credentials", "true")
     return response
 
