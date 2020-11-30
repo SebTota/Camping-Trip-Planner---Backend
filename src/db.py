@@ -6,6 +6,8 @@ import uuid
 cnxpool = mysql.connector.pooling.MySQLConnectionPool(
     pool_name="mypool",
     pool_size=5,
+    pool_reset_session=True,
+    autocommit=True,
     host=os.getenv("DB_HOST"),
     user=os.getenv("DB_USER"),
     password=os.getenv("DB_PASS"),
@@ -543,7 +545,7 @@ def get_group_uuid_by_user(email):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
 
-    cmd = "SELECT Group_Name, Groups_Uuid FROM Tbl_Groups " \
+    cmd = "SELECT distinct Group_Name, Groups_Uuid FROM Tbl_Groups " \
           "INNER JOIN Tbl_Group_Users " \
           "ON Tbl_Group_Users.Group_Id = Tbl_Groups._id " \
           "INNER JOIN Tbl_Users " \
@@ -583,6 +585,43 @@ def update_item_status(element_uuid, status):
     my_db.commit()
     cursor.close()
     my_db.close()
+
+
+def get_all_users_in_group(group_uuid):
+    my_db = cnxpool.get_connection()
+    print('here')
+    cursor = my_db.cursor()
+    print('here')
+
+    cmd = 'SELECT Users_First_Name, Users_Last_Name, Users_Email FROM Tbl_Users INNER JOIN Tbl_Group_Users on ' \
+          'Tbl_Group_Users.User_Id = Tbl_Users._id INNER JOIN Tbl_Groups on Tbl_Groups._id = Tbl_Group_Users.Group_Id ' \
+          'WHERE Groups_Uuid = %s '
+    print('here')
+
+    cursor.execute(cmd, (group_uuid,))
+    print('here')
+    # my_db.commit()
+    print('here')
+
+
+    res = cursor.fetchall()
+
+    cursor.close()
+    my_db.close()
+
+    print(res)
+
+    if len(res) == 0:
+        return []
+    else:
+        ret_list = list(dict())
+        for i in range(len(res)):
+            ret_list.append({
+                "first-name": res[i][0].strip().title(),
+                "last-name": res[i][1].strip().title(),
+                "email": res[i][2]
+            })
+        return ret_list
 
 
 if __name__ == '__main__':
