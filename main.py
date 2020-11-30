@@ -178,7 +178,7 @@ def decline_group_invite():
         # Missing request uuid so nothing to decline
         return jsonify({'status': 400, 'error': 'missing-uuid'})
 
-    
+
 @app.route('/getGroupsByUser', methods=['GET'])
 def get_groups_by_user():
     user_email = session.get('email', None)
@@ -213,7 +213,7 @@ def delete_self_from_group():
     else:
         return jsonify({'status': 400})
 
-        
+
 @app.route('/renameGroup', methods=['POST'])
 def rename_group():
     data = request.get_json(force=True)
@@ -262,7 +262,8 @@ def add_element_to_list():
 
     if list_id and element_name and element_description and element_user_id and element_quantity and element_cost:
         return jsonify({'status': 200,
-                        'elements': db.add_item_to_list(list_id, element_name, element_description, element_user_id, element_quantity,element_cost)})
+                        'elements': db.add_item_to_list(list_id, element_name, element_description, element_user_id,
+                                                        element_quantity, element_cost)})
     else:
         return jsonify({'status': 400,
                         'elements': 'required data not provided or does not exist'})
@@ -271,7 +272,7 @@ def add_element_to_list():
 @app.route('/claimItem', methods=['POST'])
 def claim_item():
     element_uuid = request.args.get("element-uuid")
-    user_email = request.args.get("user-email")#session.get('email', None)
+    user_email = request.args.get("user-email")  # session.get('email', None)
     print(user_email)
     if element_uuid and user_email:
         return jsonify({'status': 200,
@@ -353,7 +354,7 @@ def get_item_by_id():
         return jsonify(({'status': 400,
                          'elements': 'element_uuid does not exist'}))
 
-      
+
 @app.route('/createList', methods=['POST'])
 def create_list():
     data = request.get_json(force=True)
@@ -385,6 +386,18 @@ def rename_list():
 
     if list_uuid:
         db.rename_list(data["new-name"], list_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/createGroup', methods=['POST'])
+def create_group():
+    data = request.get_json(force=True)
+    name = data['name']
+
+    if name:
+        db.create_group(name)
         return jsonify({'status': 200})
     else:
         return jsonify({'status': 400})

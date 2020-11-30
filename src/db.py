@@ -210,6 +210,57 @@ def rename_group(new_name, group_uuid):
     my_db.close()
 
 
+def create_group(name):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    group_uuid = str(uuid.uuid4())
+    cmd = "INSERT INTO Tbl_Groups (Group_Name, Groups_Uuid) " \
+          "VALUES (%s,%s)"
+    vls = (name, group_uuid)
+    cursor.execute(cmd, vls)
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
+def get_group_id_by_name(name):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    query = "SELECT _id FROM Tbl_Groups " \
+            "WHERE Group_Name = %s"
+    cursor.execute(query, (name,))
+    retVal = cursor.fetchall()
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+    return retVal[0][0]
+
+
+def get_user_id_by_email(email):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    query = "SELECT _id FROM Tbl_Users " \
+            "WHERE Users_Username = %s"
+    cursor.execute(query, (email,))
+    retVal = cursor.fetchall()
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+    return retVal[0][0]
+
+
+def add_user_to_group(group_id,user_id):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    cmd = "INSERT INTO Tbl_Group_Users (Group_Id,User_Id) " \
+          "VALUES (%s,%s)"
+    vls = (group_id, user_id)
+    cursor.execute(cmd, vls)
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
 def create_list(name, group_id):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
@@ -520,4 +571,4 @@ def update_item_status(element_uuid, status):
 
 
 if __name__ == '__main__':
-    print(get_item_by_id('94bb9a99-e7fe-47c2-bf7c-60a843c72577'))
+    add_user_to_group(1,14)
