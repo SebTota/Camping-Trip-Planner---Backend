@@ -259,11 +259,12 @@ def add_element_to_list():
     element_user_id = data['element-user-id']
     element_quantity = data['element-quantity']
     element_cost = data['element_cost']
+    element_status = data['element_status']
 
-    if list_id and element_name and element_description and element_user_id and element_quantity and element_cost:
+    if list_id and element_name and element_description and element_user_id and element_quantity and element_cost and element_status:
         return jsonify({'status': 200,
                         'elements': db.add_item_to_list(list_id, element_name, element_description, element_user_id,
-                                                        element_quantity, element_cost)})
+                                                        element_quantity, element_cost, element_status)})
     else:
         return jsonify({'status': 400,
                         'elements': 'required data not provided or does not exist'})
