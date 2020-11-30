@@ -116,8 +116,18 @@ def signup():
         return jsonify({'status': 400, 'error': 'user-already-exists'})
     else:
         db.sign_up_db(first_name, last_name, email, auth.hash_pass(password))
+        session.permanent = True
+        expire_date = datetime.datetime.now() + datetime.timedelta(days=1)
         session['email'] = email
-        return jsonify({'status': 200})
+
+        profile_query = db.get_profile_by_email(email)
+        resp = jsonify({'status': 200, 'email': email})
+        resp.set_cookie('active', 'true', expires=expire_date)
+
+        for k, v in profile_query['profile'].items():
+            resp.set_cookie(k, v, expires=expire_date)
+
+        return resp
 
 
 @app.route('/forgotPassword', methods=['POST'])
