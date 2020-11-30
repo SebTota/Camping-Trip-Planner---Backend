@@ -123,12 +123,8 @@ def forgot_password():
 @app.route('/logout', methods=['POST'])
 def logout():
     print(session, file=sys.stdout)
-    session.clear()
-
-    resp = jsonify({'status': 200})
-    resp.set_cookie('active', 'false')
-
-    return resp
+    session.pop('email', None)
+    return jsonify({'status': 200}), 200
 
 
 @app.route('/inviteUser', methods=['POST'])
@@ -398,12 +394,40 @@ def rename_list():
 @app.route('/createGroup', methods=['POST'])
 def create_group():
     data = request.get_json(force=True)
-    name = data['name']
+    group_name = data['group-name']
+    user_email = session.get('email', None)
 
-    if name:
-        db.create_group(name)
+    if group_name:
+        group_uuid = db.create_group(group_name)
+        db.add_user_to_group(db.get_group_id_by_uuid(group_uuid), db.get_user_id_by_email(user_email))
+
         return jsonify({'status': 200})
     else:
         return jsonify({'status': 400})
-      
-      
+
+
+@app.route('/addUserToGroup', methods=['POST'])
+def add_user_to_group():
+    data = request.get_json(force=True)
+    user_email = session.get('email', None)
+    group_uuid = data.get("group-uuid")
+
+    if user_email and group_uuid:
+        db.add_user_to_group(db.get_group_id_by_uuid(group_uuid), db.get_user_id_by_email(user_email))
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+
+
+if __name__ == '__main__':
+    cert = os.getenv('DOMAIN_CERT')
+    key = os.getenv('PRIVATE_KEY')
+
+    app.run()
+
+    # if cert is None or key is None:
+    #     app.run(debug=True, host='0.0.0.0')
+    # else:
+    #     app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
