@@ -210,6 +210,57 @@ def rename_group(new_name, group_uuid):
     my_db.close()
 
 
+def create_group(name):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    group_uuid = str(uuid.uuid4())
+    cmd = "INSERT INTO Tbl_Groups (Group_Name, Groups_Uuid) " \
+          "VALUES (%s,%s)"
+    vls = (name, group_uuid)
+    cursor.execute(cmd, vls)
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
+def get_group_id_by_name(name):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    query = "SELECT _id FROM Tbl_Groups " \
+            "WHERE Group_Name = %s"
+    cursor.execute(query, (name,))
+    retVal = cursor.fetchall()
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+    return retVal[0][0]
+
+
+def get_user_id_by_email(email):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    query = "SELECT _id FROM Tbl_Users " \
+            "WHERE Users_Username = %s"
+    cursor.execute(query, (email,))
+    retVal = cursor.fetchall()
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+    return retVal[0][0]
+
+
+def add_user_to_group(group_id,user_id):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    cmd = "INSERT INTO Tbl_Group_Users (Group_Id,User_Id) " \
+          "VALUES (%s,%s)"
+    vls = (group_id, user_id)
+    cursor.execute(cmd, vls)
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
 def create_list(name, group_id):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
@@ -265,7 +316,7 @@ def rename_list(new_name, list_uuid):
 def get_items_in_list(list_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    query = "SELECT List_id, Elements_Name, Elements_Cost, Elements_User_id, Elements_Quantity, Elements_Uuid, Element_Status FROM Tbl_Elements " \
+    query = "SELECT List_id, Elements_Name, Elements_Cost, Elements_User_id, Elements_Quantity, Elements_Uuid, Element_Status, Elements_Description FROM Tbl_Elements " \
             "INNER JOIN Tbl_Lists TL on Tbl_Elements.List_id = TL._id " \
             "WHERE TL.Lists_Uuid = %s"
 
@@ -287,7 +338,8 @@ def get_items_in_list(list_uuid):
                 "claimed-user-id": res[i][3],
                 "item-quantity": res[i][4],
                 "item-uuid": res[i][5],
-                "item-status": res[i][6]
+                "item-status": res[i][6],
+                "item-description": res[i][7]
             })
         return d1
 
@@ -296,7 +348,7 @@ def get_items_in_list(list_uuid):
 def get_lists_in_group(group_id):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
-    query = "SELECT Lists_Uuid, Lists_Name FROM Tbl_Lists " \
+    query = "SELECT Lists_Name, Lists_Uuid FROM Tbl_Lists " \
             "INNER JOIN Tbl_Groups ON Tbl_Lists.Group_id = Tbl_Groups._id " \
             "WHERE Tbl_Groups.Groups_Uuid = %s"
 
@@ -317,14 +369,14 @@ def get_lists_in_group(group_id):
         return d1
 
 
-def add_item_to_list(list_id, name, element_cost, element_user_id, element_quantity):
+def add_item_to_list(list_id, name, element_description, element_user_id, element_quantity, element_cost):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     element_uuid = str(uuid.uuid4())
-    cmd = "INSERT INTO Tbl_Elements (List_id, Elements_Name, Elements_Cost, " \
-          "Elements_User_id, Elements_Quantity, Elements_Uuid, Element_status) VALUES (%s,%s,%s,%s,%s,%s,%s)"
+    cmd = "INSERT INTO Tbl_Elements (List_id, Elements_Name, Elements_Description, " \
+          "Elements_User_id, Elements_Quantity, Elements_Uuid, Element_status, Elements_Cost) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)"
 
-    vls = (list_id, name, element_cost, element_user_id, element_quantity, element_uuid, False)
+    vls = (list_id, name, element_description, element_user_id, element_quantity, element_uuid, False, element_cost)
     cursor.execute(cmd, vls)
     my_db.commit()
     cursor.close()
@@ -342,28 +394,41 @@ def remove_item_from_list(element_uuid):
     my_db.close()
 
 
-def change_cost_of_item(item_id, new_cost):
+def change_cost_of_item(new_cost, element_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     cmd = "UPDATE Tbl_Elements " \
           "SET Elements_Cost = %s " \
-          "WHERE _id = %s"
-    cursor.execute(cmd, (new_cost, item_id))
+          "WHERE Elements_Uuid = %s"
+    cursor.execute(cmd, (new_cost, element_uuid))
     my_db.commit()
     cursor.close()
     my_db.close()
 
 
-def change_name_of_item(item_id, new_name):
+def rename_item(new_name, element_uuid):
     my_db = cnxpool.get_connection()
     cursor = my_db.cursor()
     cmd = "UPDATE Tbl_Elements " \
           "SET Elements_Name = %s " \
-          "WHERE _id = %s"
-    cursor.execute(cmd, (new_name, item_id))
+          "WHERE Elements_Uuid = %s"
+    cursor.execute(cmd, (new_name, element_uuid))
     my_db.commit()
     cursor.close()
     my_db.close()
+
+
+def change_item_description(new_description, element_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    cmd = "UPDATE Tbl_Elements " \
+          "SET Elements_Description = %s " \
+          "WHERE Elements_Uuid = %s"
+    cursor.execute(cmd, (new_description, element_uuid))
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
 
 
 def claim_item(element_uuid, user_email):
@@ -389,6 +454,39 @@ def unclaim_item(element_uuid):
     my_db.commit()
     cursor.close()
     my_db.close()
+
+
+def get_item_by_id(item_uuid):
+    my_db = cnxpool.get_connection()
+    cursor = my_db.cursor()
+    query = "SELECT List_id, Elements_Name, Elements_Description, Elements_User_id, " \
+            "Elements_Quantity, Element_Status, Elements_Cost" \
+            " FROM Tbl_Elements " \
+            "WHERE Elements_Uuid = %s"
+    cursor.execute(query, (item_uuid,))
+    res = cursor.fetchall()
+    my_db.commit()
+    cursor.close()
+    my_db.close()
+
+
+    if len(res) == 0:
+        return []
+    else:
+        ret_list = list(dict())
+        for i in range(len(res)):
+            ret_list.append({
+                "list-id": res[i][0],
+                "elements-name": res[i][1],
+                "elements-descripion": res[i][2],
+                "elements-user-id": res[i][3],
+                "elements-quantity": res[i][4],
+                "element-status": res[i][5],
+                "elements-cost": res[i][6]
+
+            })
+        return ret_list
+
 
 
 def get_user_id_by_username(user_name):
@@ -452,7 +550,8 @@ def get_group_uuid_by_user(email):
         for i in range(len(res)):
             ret_list.append({
                 "group-name": res[i][0],
-                'group-uuid': res[i][1],
+                "group-uuid": res[i][1],
+
             })
         return ret_list
 
@@ -472,4 +571,4 @@ def update_item_status(element_uuid, status):
 
 
 if __name__ == '__main__':
-    print(get_items_in_list("abc1234"))
+    add_user_to_group(1,14)
