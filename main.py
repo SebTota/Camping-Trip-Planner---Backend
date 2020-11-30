@@ -123,12 +123,8 @@ def forgot_password():
 @app.route('/logout', methods=['POST'])
 def logout():
     print(session, file=sys.stdout)
-    session.clear()
-
-    resp = jsonify({'status': 200})
-    resp.set_cookie('active', 'false')
-
-    return resp
+    session.pop('email', None)
+    return jsonify({'status': 200}), 200
 
 
 @app.route('/inviteUser', methods=['POST'])
@@ -217,7 +213,7 @@ def delete_self_from_group():
     else:
         return jsonify({'status': 400})
 
-        
+
 @app.route('/renameGroup', methods=['POST'])
 def rename_group():
     data = request.get_json(force=True)
@@ -232,7 +228,7 @@ def rename_group():
 
 @app.route('/getElementsByList', methods=['GET'])
 def get_elements_by_list():
-    list_uuid = request.args.get("list_uuid")
+    list_uuid = request.args.get("list-uuid")
 
     if list_uuid:
         return jsonify(({'status': 200,
@@ -244,7 +240,7 @@ def get_elements_by_list():
 
 @app.route('/deleteElementFromList', methods=['POST'])
 def delete_element_from_list():
-    element_uuid = request.args.get("element_uuid")
+    element_uuid = request.args.get("element-uuid")
 
     if element_uuid:
         return jsonify(({'status': 200,
@@ -257,15 +253,17 @@ def delete_element_from_list():
 @app.route('/addElementToList', methods=['POST'])
 def add_element_to_list():
     data = request.get_json(force=True)
-    list_id = data['list_id']
-    element_name = data['element_name']
+    list_id = data['list-id']
+    element_name = data['element-name']
+    element_description = data['element-description']
+    element_user_id = data['element-user-id']
+    element_quantity = data['element-quantity']
     element_cost = data['element_cost']
-    element_user_id = data['element_user_id']
-    element_quantity = data['element_quantity']
 
-    if list_id and element_name and element_cost and element_user_id and element_quantity:
+    if list_id and element_name and element_description and element_user_id and element_quantity and element_cost:
         return jsonify({'status': 200,
-                        'elements': db.add_item_to_list(list_id, element_name, element_cost, element_user_id, element_quantity)})
+                        'elements': db.add_item_to_list(list_id, element_name, element_description, element_user_id,
+                                                        element_quantity, element_cost)})
     else:
         return jsonify({'status': 400,
                         'elements': 'required data not provided or does not exist'})
@@ -273,8 +271,8 @@ def add_element_to_list():
 
 @app.route('/claimItem', methods=['POST'])
 def claim_item():
-    element_uuid = request.args.get("element_uuid")
-    user_email = request.args.get("user_email")#session.get('email', None)
+    element_uuid = request.args.get("element-uuid")
+    user_email = request.args.get("user-email")  # session.get('email', None)
     print(user_email)
     if element_uuid and user_email:
         return jsonify({'status': 200,
@@ -286,7 +284,7 @@ def claim_item():
 
 @app.route('/unClaimItem', methods=['POST'])
 def unclaim_item():
-    element_uuid = request.args.get("element_uuid")
+    element_uuid = request.args.get("element-uuid")
 
     if element_uuid:
         return jsonify({'status': 200,
@@ -298,8 +296,8 @@ def unclaim_item():
 
 @app.route('/updateItemStatus', methods=['POST'])
 def update_item_status():
-    element_status = request.args.get("element_status")
-    element_uuid = request.args.get("element_uuid")
+    element_status = request.args.get("element-status")
+    element_uuid = request.args.get("element-uuid")
 
     if element_uuid and element_status:
         return jsonify({'status': 200,
@@ -308,7 +306,55 @@ def update_item_status():
         return jsonify({'status': 400,
                         'elements': 'could not update element status'})
 
-      
+
+@app.route('/renameItem', methods=['POST'])
+def rename_item():
+    data = request.get_json(force=True)
+    element_uuid = data.get("element-uuid")
+
+    if element_uuid:
+        db.rename_item(data["new-name"], element_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/changeItemCost', methods=['POST'])
+def change_item_cost():
+    data = request.get_json(force=True)
+    element_uuid = data.get("element-uuid")
+
+    if element_uuid:
+        db.change_cost_of_item(data["new-cost"], element_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/changeItemDescription', methods=['POST'])
+def change_item_description():
+    data = request.get_json(force=True)
+    element_uuid = data.get("element-uuid")
+
+    if element_uuid:
+        db.change_item_description(data["new-description"], element_uuid)
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/getItemById', methods=['GET'])
+def get_item_by_id():
+    element_uuid = request.args.get("element-uuid")
+
+    if element_uuid:
+        return jsonify(({'status': 200,
+                         'elements': db.get_item_by_id(element_uuid)}))
+    else:
+        return jsonify(({'status': 400,
+                         'elements': 'element_uuid does not exist'}))
+
+
 @app.route('/createList', methods=['POST'])
 def create_list():
     data = request.get_json(force=True)
@@ -355,14 +401,41 @@ def get_users_in_group():
         return jsonify({'status': 200, 'users': db.get_all_users_in_group(group_uuid)})
     return jsonify({'status': 400})
 
+@app.route('/createGroup', methods=['POST'])
+def create_group():
+    data = request.get_json(force=True)
+    group_name = data['group-name']
+    user_email = session.get('email', None)
+
+    if group_name:
+        group_uuid = db.create_group(group_name)
+        db.add_user_to_group(db.get_group_id_by_uuid(group_uuid), db.get_user_id_by_email(user_email))
+
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
+
+@app.route('/addUserToGroup', methods=['POST'])
+def add_user_to_group():
+    data = request.get_json(force=True)
+    user_email = session.get('email', None)
+    group_uuid = data.get("group-uuid")
+
+    if user_email and group_uuid:
+        db.add_user_to_group(db.get_group_id_by_uuid(group_uuid), db.get_user_id_by_email(user_email))
+        return jsonify({'status': 200})
+    else:
+        return jsonify({'status': 400})
+
 
 if __name__ == '__main__':
     cert = os.getenv('DOMAIN_CERT')
     key = os.getenv('PRIVATE_KEY')
 
-    # app.run()
+    app.run()
 
-    if cert is None or key is None:
-        app.run(debug=True, host='0.0.0.0')
-    else:
-        app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
+    # if cert is None or key is None:
+    #     app.run(debug=True, host='0.0.0.0')
+    # else:
+    #     app.run(debug=True, host='0.0.0.0', ssl_context=(cert, key))
